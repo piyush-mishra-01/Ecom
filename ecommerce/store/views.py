@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 from .models import *
 from django.http import JsonResponse
 import json
@@ -35,6 +36,7 @@ def cart(request):
     context = {'items' :items, 'order': order, 'cartItems':cartItems}
     return render(request, 'store/cart.html', context)
 
+@csrf_exempt
 def checkout(request):
     if request.user.is_authenticated:
         customer = request.user.customer
@@ -85,6 +87,10 @@ def processOrder(request):
         order, created = Order.objects.get_or_create(customer=customer, complete=False)
         total =float(data['form']['total'])
         order.trasnsaction_id = transaction_id
+
+        if total == order.get_cart_total:
+            order.complete = True
+        order.save()
 
         if order.shipping == True:
             ShippingAddress.objects.create(
