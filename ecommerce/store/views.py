@@ -1,46 +1,52 @@
-from django.shortcuts import render
+from django.db.models.fields import EmailField
+from django.shortcuts import render, HttpResponse, redirect
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
+from django.contrib import messages
 import datetime
 import json
-from .models import  *
+from .models import *
 from .utils import *
 
 
 # remember to change the code here, to show total cart value at about page too
 def about(request):
-    data  = cartData(request)
+    data = cartData(request)
     cartItems = data['cartItems']
 
     products = Product.objects.all()
-    context = {"products":products, 'cartItems':cartItems}
+    context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/about.html', context)
 
+
 def store(request):
-    data  = cartData(request)
+    data = cartData(request)
     cartItems = data['cartItems']
 
     products = Product.objects.all()
-    context = {"products":products, 'cartItems':cartItems}
+    context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/store.html', context)
 
 
 def cart(request):
-    data  = cartData(request)
+    data = cartData(request)
     cartItems = data['cartItems']
     order = data['order']
     items = data['items']
 
-    context = {'items':items, 'order':order, 'cartItems':cartItems}
+    context = {'items': items, 'order': order, 'cartItems': cartItems}
     return render(request, 'store/cart.html', context)
 
 
 def checkout(request):
-    data  = cartData(request)
+    data = cartData(request)
     cartItems = data['cartItems']
     order = data['order']
     items = data['items']
 
-    context = {'items':items, 'order':order, 'cartItems':cartItems, 'shipping':False}
+    context = {'items': items, 'order': order,
+               'cartItems': cartItems, 'shipping': False}
     return render(request, 'store/checkout.html', context)
 
 
@@ -49,16 +55,18 @@ def updateItem(request):
     productId = data['productId']
     action = data['action']
     print('Action :', action)
-    print('productId :',productId)
+    print('productId :', productId)
     customer = request.user.customer
     product = Product.objects.get(id=productId)
     # below line attaches the order to the given customer
-    order, created = Order.objects.get_or_create(customer=customer, complete=False)
+    order, created = Order.objects.get_or_create(
+        customer=customer, complete=False)
     # in the below line, we r using 'get_or_create' to change the values of orderItem, if it already exists
     # so, if it already exists, we don't wan't to create orderItem again, we just want to change the quantity of orderItem
-    orderItem, created = OrderItem.objects.get_or_create(order=order, product=product)
+    orderItem, created = OrderItem.objects.get_or_create(
+        order=order, product=product)
 
-    if action =='add':
+    if action == 'add':
         # by clicking up arrow, increment orderItem by 1
         orderItem.quantity = (orderItem.quantity + 1)
     elif action == 'remove':
@@ -81,7 +89,8 @@ def processOrder(request):
 
     if request.user.is_authenticated:
         customer = request.user.customer
-        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+        order, created = Order.objects.get_or_create(
+            customer=customer, complete=False)
 
     else:
         # guestOrder function is present in utils.py
@@ -96,12 +105,96 @@ def processOrder(request):
 
     if order.shipping == True:
         ShippingAddress.objects.create(
-            customer = customer,
-            order = order,
-            address = data['shipping']['address'],
-            city = data['shipping']['city'],
-            state = data['shipping']['state'],
-            zipcode = data['shipping']['zipcode'],
+            customer=customer,
+            order=order,
+            address=data['shipping']['address'],
+            city=data['shipping']['city'],
+            state=data['shipping']['state'],
+            zipcode=data['shipping']['zipcode'],
+        )
+
+    return JsonResponse("Payment submitted...", safe=False)
+
+
+def handleSignup(request):
+    if request.user.is_anonymous:
+        if request.method == 'POST':
+            username = request.POST['username']
+            email = request.POST['email']
+            fname = request.POST['fname']
+            lname = request.POST['lname']
+            pass1 = request.POST['pass1']
+            pass2 = request.POST['pass2']
+
+            # username name must be less than 10 char
+            if len(username) > 10:
+                messages.error(
+                    request, "Username name must be less than 10 characters")
+                return redirect("/signup")
+
+            # unique email ID
+            if email and User.objects.filter(email=email).exists():
+                messages.error(request, "Email already exist")
+                return redirect("/signup")
+
+            if username and User.objects.filter(username=username).exists():
+                messages.error(request, "username already exist")
+                return redirect("/signup")
+
+            # length of password
+            if len(pass1) < 6:
+                messages.error(request, "Password must be more than 6 characters")
+                return redirect("/signup")
+
+            # Passwords should match
+            if pass1 != pass2:
+                messages.error(request, "Passwords do not match")
+                return redirect("/signup")
+
+            # Create User
+            myuser = User.objects.create_user(username, email, pass1)
+            myuser.first_name = fname
+            myuser.last_name = lname
+            myuser.save()
+
+            # Create Customer
+            Customer.objects.create(
+                user = myuser,
+                name = f"{fname} {lname}",
+                email = email
             )
 
-    return JsonResponse("Payment submitted...",safe=False)
+            messages.success(request, username + " Your account has been succesfully created")
+            return redirect("/login")
+    else:
+        return redirect("/")
+    return render(request, 'store/signup.html')
+
+
+def handleLogin(request):
+    if request.user.is_anonymous:
+        if request.method == 'POST':
+            loginusername = request.POST['loginusername']
+            loginpass = request.POST['loginpass']
+            user = authenticate(username=loginusername, password=loginpass)
+
+            if user is not None:
+                login(request, user)
+                messages.success(request, "successfully logged in")
+                return redirect("/")
+            else:
+                messages.error(request, "Invalid Credentials, Please try again")
+                return redirect("/login")
+    else:
+        return redirect("/") 
+
+    return render(request, 'store/login.html')
+
+
+def handleLogout(request):
+    if request.user.is_authenticated:   
+        logout(request)
+        messages.success(request, "successfully logged out")
+        return redirect("/")
+    else:
+        return redirect("/") 
