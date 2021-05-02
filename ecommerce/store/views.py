@@ -1,13 +1,20 @@
-from django.db.models.fields import EmailField
 from django.shortcuts import render, HttpResponse, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.contrib import messages
+from django.contrib.sites.shortcuts import get_current_site
+from django.views.decorators.csrf import csrf_exempt
+import razorpay
 import datetime
 import json
 from .models import *
 from .utils import *
+
+
+# RazorPay client
+client = razorpay.Client(
+    auth=('rzp_test_lD1RsgbizQ5lpQ', 'jDdLiF2QTGmI4A8asOAbDz2K'))
 
 
 # remember to change the code here, to show total cart value at about page too
@@ -45,10 +52,106 @@ def checkout(request):
     order = data['order']
     items = data['items']
 
-    context = {'items': items, 'order': order,
-               'cartItems': cartItems, 'shipping': False}
-    return render(request, 'store/checkout.html', context)
+    # RazorPay integration
+    callback_url = 'http://' + \
+        str(get_current_site(request)) + '/handlerequest'
+    if request.user.is_authenticated:
+        orderId = order.order_id
+        amount = float(order.get_cart_total)*100
+        order_currency = 'INR'
+        if amount > 1:
+            payment = client.order.create(
+                {'amount': amount, 'currency': order_currency, 'payment_capture': '0'})
+            order.razorpay_order_id = payment['id']
+            order.save()
 
+            context = {'items': items, 'order': order,
+                       'cartItems': cartItems, 'shipping': False,
+                       'amount': amount,
+                       'order_id': payment['id'], 'orderId': orderId,
+                       'callback_url': callback_url}
+            return render(request, 'store/checkout.html', context)
+        else:
+            return HttpResponse("Minimum ammount must be INR 1 for checkout")
+
+    else:
+        """ Backend for payment of Annonimous user """
+        amount = float(order['get_cart_total'])*100
+        if amount > 1:
+            payment = client.order.create(
+                {'amount': amount, 'currency': "INR", 'payment_capture': '0'})
+
+            context = {'items': items, 'order': order,
+                    'cartItems': cartItems, 'shipping': False,
+                    'order_id': payment['id'], 'amount': amount,
+                    'callback_url': callback_url, }
+            return render(request, 'store/checkout.html', context)
+        else:
+            return HttpResponse("Minimum ammount must be INR 1 for checkout")
+
+
+# Getting paymentID and Signature
+@csrf_exempt
+def handlerequest(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            try:
+                payment_id = request.POST.get('razorpay_payment_id', '')
+                order_id = request.POST.get('razorpay_order_id', '')
+                signature = request.POST.get('razorpay_signature', '')
+                params_dict = {
+                    'razorpay_payment_id': payment_id,
+                    'razorpay_order_id': order_id,
+                    'razorpay_signature': signature
+                }
+                try:
+                    order_db = Order.objects.get(razorpay_order_id=order_id)
+                except:
+                    return HttpResponse("505 Not Found")
+                order_db.razorpay_payment_id = payment_id
+                order_db.razorpay_signature = signature
+                order_db.save()
+                client.utility.verify_payment_signature(params_dict)
+                print(payment_id, order_id, signature)
+
+                context = {'items': items, 'order': order,
+                           'cartItems': cartItems, 'shipping': False, }
+                return render(request, 'store/handlerequest.html', context)
+
+            except:
+                return HttpResponse("505 Not Found")
+    else:
+        if request.method == 'POST':
+            try:
+                payment_id = request.POST.get('razorpay_payment_id', '')
+                order_id = request.POST.get('razorpay_order_id', '')
+                signature = request.POST.get('razorpay_signature', '')
+                params_dict = {
+                    'razorpay_payment_id': payment_id,
+                    'razorpay_order_id': order_id,
+                    'razorpay_signature': signature
+                }
+                # try:
+                #     order_db = Order.objects.get(razorpay_order_id=order_id)
+                # except:
+                #     return HttpResponse("505 Not Found")
+                # order_db.razorpay_payment_id = payment_id
+                # order_db.razorpay_signature = signature
+                # order_db.save()
+                client.utility.verify_payment_signature(params_dict)
+                print(params_dict)
+
+                context = {'items': items, 'order': order,
+                            'cartItems': cartItems, 'shipping': False, }
+                return render(request, 'store/handlerequest.html', context)
+
+            except:
+                return HttpResponse("505 Not Found")
 
 def updateItem(request):
     data = json.loads(request.body)
@@ -117,6 +220,11 @@ def processOrder(request):
 
 
 def handleSignup(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
     if request.user.is_anonymous:
         if request.method == 'POST':
             username = request.POST['username']
@@ -143,7 +251,8 @@ def handleSignup(request):
 
             # length of password
             if len(pass1) < 6:
-                messages.error(request, "Password must be more than 6 characters")
+                messages.error(
+                    request, "Password must be more than 6 characters")
                 return redirect("/signup")
 
             # Passwords should match
@@ -159,19 +268,28 @@ def handleSignup(request):
 
             # Create Customer
             Customer.objects.create(
-                user = myuser,
-                name = f"{fname} {lname}",
-                email = email
+                user=myuser,
+                name=f"{fname} {lname}",
+                email=email
             )
 
-            messages.success(request, username + " Your account has been succesfully created")
+            messages.success(request, username +
+                             " Your account has been succesfully created")
             return redirect("/login")
     else:
         return redirect("/")
-    return render(request, 'store/signup.html')
+
+    context = {'items': items, 'order': order,
+               'cartItems': cartItems, 'shipping': False, }
+    return render(request, 'store/signup.html', context)
 
 
 def handleLogin(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
     if request.user.is_anonymous:
         if request.method == 'POST':
             loginusername = request.POST['loginusername']
@@ -183,18 +301,21 @@ def handleLogin(request):
                 messages.success(request, "successfully logged in")
                 return redirect("/")
             else:
-                messages.error(request, "Invalid Credentials, Please try again")
+                messages.error(
+                    request, "Invalid Credentials, Please try again")
                 return redirect("/login")
     else:
-        return redirect("/") 
+        return redirect("/")
 
-    return render(request, 'store/login.html')
+    context = {'items': items, 'order': order,
+               'cartItems': cartItems, 'shipping': False, }
+    return render(request, 'store/login.html', context)
 
 
 def handleLogout(request):
-    if request.user.is_authenticated:   
+    if request.user.is_authenticated:
         logout(request)
         messages.success(request, "successfully logged out")
         return redirect("/")
     else:
-        return redirect("/") 
+        return redirect("/")

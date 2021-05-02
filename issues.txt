@@ -1,0 +1,6 @@
+Issues:
+AnonymousUser cant access checkoutPage
+AnonymousUser accessing paypemt by default
+User cant access checkoutPage if Rs < 1
+If cancel UPI payment gets successful
+Cant submit Shipping info

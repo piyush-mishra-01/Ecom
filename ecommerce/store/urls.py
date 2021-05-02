@@ -10,5 +10,6 @@ urlpatterns = [
     path('signup/',views.handleSignup, name="signup"),
     path('login/',views.handleLogin, name="login"),
     path('logout/',views.handleLogout, name="logout"),
+    path('handlerequest',views.handlerequest, name="handlerequest")
 ]
 
