@@ -75,6 +75,18 @@
 	      <li class="nav-item active">
 	        <a class="nav-link" href="{% url 'store' %}">Store <span class="sr-only">(current)</span></a>
 	      </li>
+
+		<div>
+		<form class="form-inline my-2 my-lg-0" action="/search">
+		<div class="input-group">
+		<input name="q" type="text" class="form-control" placeholder="search" />
+		<div class="input-group-append">
+		<button  class="btn btn-warning" type="submit" id="button-addon2">Search</button>
+		</div>
+		</div>
+        
+      </form>
+		</div>  
 	 
 	    </ul>
 	    <div class="form-inline my-2 my-lg-0">

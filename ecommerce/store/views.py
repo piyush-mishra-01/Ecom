@@ -35,6 +35,14 @@ def store(request):
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/store.html', context)
 
+def search(request):
+    q=request.GET['q']
+    data = cartData(request)
+    cartItems = data['cartItems']
+    products = Product.objects.all().filter(name__icontains=q)
+    context = {"products": products, 'cartItems': cartItems}
+    return render(request, 'store/search.html', context)       
+
 
 def cart(request):
     data = cartData(request)
