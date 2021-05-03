@@ -219,6 +219,7 @@ def processOrder(request):
             customer=customer,
             order=order,
             address=data['shipping']['address'],
+            mobile=data['shipping']['mobile'],
             city=data['shipping']['city'],
             state=data['shipping']['state'],
             zipcode=data['shipping']['zipcode'],
