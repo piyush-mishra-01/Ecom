@@ -1,0 +1,39 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %}
+
+<h3 class="my-4 border-bottom pb-1"><span class="text-muted">Search results for </span>{{request.GET.q}}</h3>
+<div class="row justify-content-center align-items-center ">
+	<div class="col-lg-6 ">
+		<div class="box-element" id="form-wrapper">
+			{% if messages %}
+			<div class="alert alert-warning alert-dismissible fade show" role="alert">
+				{% for message in messages %}{{message}} {% endfor %}
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				  <span aria-hidden="true">&times;</span>
+				</button>
+			  </div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+	<div class="row">
+		{% for product in products %}
+		<div class="col-lg-4">
+			<img class="thumbnail" src="{{product.imageURL}}">
+			<div class="box-element product">
+				<h6><strong>{{product.name}}</strong></h6>
+				<hr>
+
+				<button data-product="{{product.id}}" data-action="add" class="btn btn-outline-secondary add-btn update-cart ">Add to Cart</button>
+				
+				<a class="btn btn-outline-success" href="#">View</a>
+				<!-- <a data-product="{{product.id}}" data-action="add" class="btn btn-outline-primary add-btn update-cart" href="{% url 'checkout' %} " >buy</a> -->
+				<h4 style="display: inline-block; float: right"><strong>₹{{product.price}}</strong></h4>
+
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+
+{% endblock content %}

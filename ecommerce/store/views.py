@@ -35,13 +35,14 @@ def store(request):
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/store.html', context)
 
+
 def search(request):
-    q=request.GET['q']
+    q = request.GET['q']
     data = cartData(request)
     cartItems = data['cartItems']
     products = Product.objects.all().filter(name__icontains=q)
     context = {"products": products, 'cartItems': cartItems}
-    return render(request, 'store/search.html', context)       
+    return render(request, 'store/search.html', context)
 
 
 def cart(request):
@@ -60,42 +61,97 @@ def checkout(request):
     order = data['order']
     items = data['items']
 
+    if request.user.is_authenticated: 
+        if request.method == 'POST':
+            customer = request.user.customer
+            order = Order.objects.get(
+                customer=customer, complete=False)
+            # product = Product.objects.get(name="chair")
+            # orderItem, created = OrderItem.objects.get(
+            #     order=order, product=product)
+                
+            # ShippingAddress.objects.create(
+            #     customer=customer,
+            #     order=order,
+            #     address=request.POST['address'],
+            #     mobile=request.POST['mobile'],
+            #     city=request.POST['city'],
+            #     state=request.POST['state'],
+            #     zipcode=request.POST['zipcode']
+            # )
+
+            purchased = Purchased(
+                customer=customer,
+                cart_quantity=order.get_cart_items,
+                price=order.get_cart_total,
+                # Shipping Address
+                address=request.POST['address'],
+                mobile=request.POST['mobile'],
+                city=request.POST['city'],
+                state=request.POST['state'],
+                zipcode=request.POST['zipcode']
+            )
+            purchased.save()
+
+            # PurchasedItems.objects.create(
+            #     quantity=orderItem.quantity
+            # )
+            return redirect('/payment')
+
+        context = {'items': items, 'order': order, 'cartItems': cartItems}
+        return render(request, 'store/checkout.html', context)
+
+    else:
+        return redirect('/login')
+
+
+def payment(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
     # RazorPay integration
     callback_url = 'http://' + \
         str(get_current_site(request)) + '/handlerequest'
     if request.user.is_authenticated:
+
+        customer = request.user.customer
+        purchased = Purchased.objects.filter(customer=customer).last()
         orderId = order.order_id
         amount = float(order.get_cart_total)*100
         order_currency = 'INR'
+
         if amount > 1:
             payment = client.order.create(
                 {'amount': amount, 'currency': order_currency, 'payment_capture': '0'})
             order.razorpay_order_id = payment['id']
             order.save()
+            purchased.razorpay_order_id = payment['id']
+            purchased.save()
 
             context = {'items': items, 'order': order,
                        'cartItems': cartItems, 'shipping': False,
-                       'amount': amount,
-                       'order_id': payment['id'], 'orderId': orderId,
-                       'callback_url': callback_url}
-            return render(request, 'store/checkout.html', context)
+                       'amount': amount, 'order_id': payment['id'],
+                       'orderId': orderId, 'callback_url': callback_url}
+            return render(request, 'store/payment.html', context)
         else:
             return HttpResponse("Minimum ammount must be INR 1 for checkout")
 
     else:
-        """ Backend for payment of Annonimous user """
-        amount = float(order['get_cart_total'])*100
-        if amount > 1:
-            payment = client.order.create(
-                {'amount': amount, 'currency': "INR", 'payment_capture': '0'})
+        # amount = float(order['get_cart_total'])*100
+        # if amount > 1:
+        #     payment = client.order.create(
+        #         {'amount': amount, 'currency': "INR", 'payment_capture': '0'})
 
-            context = {'items': items, 'order': order,
-                    'cartItems': cartItems, 'shipping': False,
-                    'order_id': payment['id'], 'amount': amount,
-                    'callback_url': callback_url, }
-            return render(request, 'store/checkout.html', context)
-        else:
-            return HttpResponse("Minimum ammount must be INR 1 for checkout")
+        # context = {'items': items, 'order': order,
+        #            'cartItems': cartItems, 'shipping': False,
+        #            'order_id': payment['id'], 'amount': amount,
+        #            'callback_url': callback_url}
+        # return render(request, 'store/payment.html', context)
+        # else:
+        #     return HttpResponse("Minimum ammount must be INR 1 for checkout")
+        return redirect('/login')
 
 
 # Getting paymentID and Signature
@@ -119,20 +175,29 @@ def handlerequest(request):
                 }
                 try:
                     order_db = Order.objects.get(razorpay_order_id=order_id)
+                    prchased_db = Purchased.objects.get(razorpay_order_id=order_id)
                 except:
-                    return HttpResponse("505 Not Found")
+                    return HttpResponse("Razorpay orderId did not matched")
                 order_db.razorpay_payment_id = payment_id
                 order_db.razorpay_signature = signature
                 order_db.save()
-                client.utility.verify_payment_signature(params_dict)
-                print(payment_id, order_id, signature)
 
-                context = {'items': items, 'order': order,
-                           'cartItems': cartItems, 'shipping': False, }
-                return render(request, 'store/handlerequest.html', context)
+                prchased_db.razorpay_payment_id = payment_id
+                prchased_db.razorpay_signature = signature
+                prchased_db.save()
+                result = client.utility.verify_payment_signature(params_dict)
+                print(payment_id, order_id, signature)
+                if result != None:
+                    return HttpResponse("Siganatures did not matched ")
+                else:
+
+
+                    context = {'items': items, 'order': order,
+                               'cartItems': cartItems, 'shipping': False, }
+                    return render(request, 'store/handlerequest.html', context)
 
             except:
-                return HttpResponse("505 Not Found")
+                return HttpResponse("Somthing else ")
     else:
         if request.method == 'POST':
             try:
@@ -144,22 +209,23 @@ def handlerequest(request):
                     'razorpay_order_id': order_id,
                     'razorpay_signature': signature
                 }
-                # try:
-                #     order_db = Order.objects.get(razorpay_order_id=order_id)
-                # except:
-                #     return HttpResponse("505 Not Found")
-                # order_db.razorpay_payment_id = payment_id
-                # order_db.razorpay_signature = signature
-                # order_db.save()
-                client.utility.verify_payment_signature(params_dict)
                 print(params_dict)
+                try:
+                    order_db = Order.objects.get(razorpay_order_id=order_id)
+                except:
+                    return HttpResponse("Razorpay orderId did not matched")
+                order_db.razorpay_payment_id = payment_id
+                order_db.razorpay_signature = signature
+                order_db.save()
+                client.utility.verify_payment_signature(params_dict)
 
                 context = {'items': items, 'order': order,
-                            'cartItems': cartItems, 'shipping': False, }
+                           'cartItems': cartItems, 'shipping': False, }
                 return render(request, 'store/handlerequest.html', context)
 
             except:
-                return HttpResponse("505 Not Found")
+                return HttpResponse("Siganatures did not genrated ")
+
 
 def updateItem(request):
     data = json.loads(request.body)

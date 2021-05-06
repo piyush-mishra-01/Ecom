@@ -1,0 +1,71 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %}
+<div class="row justify-content-center align-items-center ">
+	<div class="col-lg-6 ">
+		<div class="box-element" id="form-wrapper">
+			<!-- Razorpay integration -->
+			<div class="box-element " id="payment-info">
+				<p>Payment Options :</p>
+				<div id="paypal-button-container"></div>
+				<div id="make-payment">
+					<input id="rzp-button1" class="btn btn-success btn-block" type="submit" value="Pay &#8377; {{ order.get_cart_total|floatformat:2 }}  with Razorpay">
+					<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+					<script>
+						var options = {
+							"key": "rzp_test_lD1RsgbizQ5lpQ",
+							"order_id": "{{order_id}}",
+							"name": "WatchShop",
+							"description": "Test Transaction",
+							"image": "{% static 'images/watch.jpg' %} ",
+							"callback_url": "{{callback_url}} ",
+							// "handler": function (response) {
+							//   alert(response.razorpay_payment_id);
+							//   alert(response.razorpay_order_id);
+							//   alert(response.razorpay_signature)
+							// //   if (typeof response.razorpay_payment_id == 'undefined' || response.razorpay_payment_id < 1) {
+							// //     redirect_url = '/chechout';
+							// //   } else {
+							// //     redirect_url = callback_url='{{callback_url}}';
+							// //   }
+							// //   location.href = redirect_url;
+							// },
+							"prefill": {
+								"name": "{{request.user}}",
+								"email": "{{request.user.email}}",
+								"contact": ""
+							},
+							"theme": {
+								"color": "#F37254"
+							}
+						};
+
+						var rzp1 = new Razorpay(options);
+						rzp1.on('payment.failed', function (response) {
+							alert(response.error.code);
+							alert(response.error.description);
+							alert(response.error.source);
+							alert(response.error.step);
+							alert(response.error.reason);
+							alert(response.error.metadata.order_id);
+							alert(response.error.metadata.payment_id);
+						});
+						document.getElementById('rzp-button1').onclick = function (e) {
+							rzp1.open();
+							e.preventDefault();
+							// submitFormData()
+						}
+
+					</script>
+
+				</div>
+			</div>
+			<!-- Razorpay integration -->
+		</div>
+	</div>
+
+	<br>
+</div>
+
+
+{% endblock content %}

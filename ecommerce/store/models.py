@@ -19,6 +19,7 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
     @property
     def imageURL(self): 
         try:
@@ -92,4 +93,45 @@ class ShippingAddress(models.Model):
 
     def __str__(self):
         return self.address
+    
+class Purchased(models.Model):
+    # customer
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, blank=True, null=True)
+    # Order ID
+    order_id = models.CharField(unique=True, max_length=500, null=True, blank=True, default=None)
+    date_ordered = models.DateTimeField(auto_now_add=True)
+    cart_quantity = models.IntegerField(default=0, null=True, blank=True)
+    price = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    # RazorPay Models
+    razorpay_order_id = models.CharField(max_length=500, null=True, blank=True)
+    razorpay_payment_id = models.CharField(max_length=500, null=True, blank=True)
+    razorpay_signature = models.CharField(max_length=500, null=True, blank=True)
+    # Address
+    address = models.TextField(null=True)
+    mobile = models.CharField(max_length=200, null=True)
+    city = models.CharField(max_length=200, null=True)
+    state = models.CharField(max_length=200, null=True)
+    zipcode = models.CharField(max_length=200, null=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    # Genarating unique orderID
+    def save(self, *args, **kwargs):
+        if self.order_id is None and self.date_ordered and self.id:
+            self.order_id = self.date_ordered.strftime('PAY%y%m%d') + str(self.id)
+        return super().save(*args, **kwargs)
+
+
+    def __str__(self):
+        return self.order_id
+    
+class PurchasedItems(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, blank=True, null=True)
+    order = models.ForeignKey(Purchased, on_delete=models.SET_NULL, blank=True, null=True)
+    quantity = models.IntegerField(default=0, null=True, blank=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def get_total(self):
+        total = self.product.price * self.quantity
+        return total
     
