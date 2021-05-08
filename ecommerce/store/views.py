@@ -1,3 +1,4 @@
+from ecommerce.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
 from django.shortcuts import render, HttpResponse, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -14,7 +15,7 @@ from .utils import *
 
 # RazorPay client
 client = razorpay.Client(
-    auth=('rzp_test_lD1RsgbizQ5lpQ', 'jDdLiF2QTGmI4A8asOAbDz2K'))
+    auth=(RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY))
 
 
 # remember to change the code here, to show total cart value at about page too
@@ -61,41 +62,40 @@ def checkout(request):
     order = data['order']
     items = data['items']
 
-    if request.user.is_authenticated: 
+    if request.user.is_authenticated:
         if request.method == 'POST':
             customer = request.user.customer
-            order = Order.objects.get(
-                customer=customer, complete=False)
-            # product = Product.objects.get(name="chair")
-            # orderItem, created = OrderItem.objects.get(
-            #     order=order, product=product)
-                
-            # ShippingAddress.objects.create(
-            #     customer=customer,
-            #     order=order,
-            #     address=request.POST['address'],
-            #     mobile=request.POST['mobile'],
-            #     city=request.POST['city'],
-            #     state=request.POST['state'],
-            #     zipcode=request.POST['zipcode']
-            # )
+            purchased = PurchasedOrder.objects.filter(customer=customer).last()
+            shippingAddress = ShippingAddress.objects.filter(
+                customer=customer, purchased_order=purchased).last()
+            address = request.POST['address']
+            mobile = request.POST['mobile']
+            city = request.POST['city']
+            state = request.POST['state']
+            zipcode = request.POST['zipcode']
 
-            purchased = Purchased(
-                customer=customer,
-                cart_quantity=order.get_cart_items,
-                price=order.get_cart_total,
-                # Shipping Address
-                address=request.POST['address'],
-                mobile=request.POST['mobile'],
-                city=request.POST['city'],
-                state=request.POST['state'],
-                zipcode=request.POST['zipcode']
-            )
+            if shippingAddress:
+                shippingAddress.address = address
+                shippingAddress.mobile = mobile
+                shippingAddress.city = city
+                shippingAddress.state = state
+                shippingAddress.zipcode = zipcode
+                shippingAddress.save()
+            else:
+                ShippingAddress.objects.create(
+                    customer=customer,
+                    purchased_order=purchased,
+                    address=address,
+                    mobile=mobile,
+                    city=city,
+                    state=state,
+                    zipcode=zipcode
+                )
+
+            purchased.cart_quantity = order.get_cart_items
+            purchased.price = order.get_cart_total
             purchased.save()
 
-            # PurchasedItems.objects.create(
-            #     quantity=orderItem.quantity
-            # )
             return redirect('/payment')
 
         context = {'items': items, 'order': order, 'cartItems': cartItems}
@@ -115,46 +115,35 @@ def payment(request):
     callback_url = 'http://' + \
         str(get_current_site(request)) + '/handlerequest'
     if request.user.is_authenticated:
-
         customer = request.user.customer
-        purchased = Purchased.objects.filter(customer=customer).last()
-        orderId = order.order_id
+        purchased = PurchasedOrder.objects.filter(customer=customer).last()
+        orderId = purchased.order_id
         amount = float(order.get_cart_total)*100
         order_currency = 'INR'
-
+        notes = {'Plateform': 'WatchShop',
+                 'CallbackURL': callback_url, 'WatchSop Order Id': orderId}
         if amount > 1:
             payment = client.order.create(
-                {'amount': amount, 'currency': order_currency, 'payment_capture': '0'})
-            order.razorpay_order_id = payment['id']
-            order.save()
+                {'amount': amount, 'currency': order_currency, 'receipt': orderId,
+                 'notes': notes, 'payment_capture': '1'})
+
             purchased.razorpay_order_id = payment['id']
             purchased.save()
 
             context = {'items': items, 'order': order,
                        'cartItems': cartItems, 'shipping': False,
                        'amount': amount, 'order_id': payment['id'],
-                       'orderId': orderId, 'callback_url': callback_url}
+                       'orderId': orderId, 'callback_url': callback_url,
+                       'api_key': RAZORPAY_API_KEY}
             return render(request, 'store/payment.html', context)
         else:
             return HttpResponse("Minimum ammount must be INR 1 for checkout")
 
     else:
-        # amount = float(order['get_cart_total'])*100
-        # if amount > 1:
-        #     payment = client.order.create(
-        #         {'amount': amount, 'currency': "INR", 'payment_capture': '0'})
-
-        # context = {'items': items, 'order': order,
-        #            'cartItems': cartItems, 'shipping': False,
-        #            'order_id': payment['id'], 'amount': amount,
-        #            'callback_url': callback_url}
-        # return render(request, 'store/payment.html', context)
-        # else:
-        #     return HttpResponse("Minimum ammount must be INR 1 for checkout")
         return redirect('/login')
 
 
-# Getting paymentID and Signature
+# Getting paymentID and SignatureID
 @csrf_exempt
 def handlerequest(request):
     data = cartData(request)
@@ -174,57 +163,40 @@ def handlerequest(request):
                     'razorpay_signature': signature
                 }
                 try:
-                    order_db = Order.objects.get(razorpay_order_id=order_id)
-                    prchased_db = Purchased.objects.get(razorpay_order_id=order_id)
+                    purchased = PurchasedOrder.objects.get(
+                        razorpay_order_id=order_id)
                 except:
                     return HttpResponse("Razorpay orderId did not matched")
-                order_db.razorpay_payment_id = payment_id
-                order_db.razorpay_signature = signature
-                order_db.save()
 
-                prchased_db.razorpay_payment_id = payment_id
-                prchased_db.razorpay_signature = signature
-                prchased_db.save()
+                purchased.razorpay_payment_id = payment_id
+                purchased.razorpay_signature = signature
+                purchased.save()
+
                 result = client.utility.verify_payment_signature(params_dict)
-                print(payment_id, order_id, signature)
-                if result != None:
-                    return HttpResponse("Siganatures did not matched ")
-                else:
+                print(result)
+                if result == None:
+                    purchased.payment_status = 1
+                    purchased.save()
 
+                    """ Mail to customer and owner """
 
+                    orderItem = OrderItem.objects.get(order=order)
+                    orderItem.delete()
                     context = {'items': items, 'order': order,
                                'cartItems': cartItems, 'shipping': False, }
-                    return render(request, 'store/handlerequest.html', context)
-
+                    return render(request, 'store/paymentsuccess.html', context)
+                else:
+                    purchased.payment_status = 2
+                    purchased.save()
+                    context = {'items': items, 'order': order,
+                               'cartItems': cartItems, 'shipping': False, }
+                    return render(request, 'store/paymentfailed.html', context)
             except:
-                return HttpResponse("Somthing else ")
+                return HttpResponse("Signature did not genrated")
+        else:
+            return HttpResponse("Its not a post request")
     else:
-        if request.method == 'POST':
-            try:
-                payment_id = request.POST.get('razorpay_payment_id', '')
-                order_id = request.POST.get('razorpay_order_id', '')
-                signature = request.POST.get('razorpay_signature', '')
-                params_dict = {
-                    'razorpay_payment_id': payment_id,
-                    'razorpay_order_id': order_id,
-                    'razorpay_signature': signature
-                }
-                print(params_dict)
-                try:
-                    order_db = Order.objects.get(razorpay_order_id=order_id)
-                except:
-                    return HttpResponse("Razorpay orderId did not matched")
-                order_db.razorpay_payment_id = payment_id
-                order_db.razorpay_signature = signature
-                order_db.save()
-                client.utility.verify_payment_signature(params_dict)
-
-                context = {'items': items, 'order': order,
-                           'cartItems': cartItems, 'shipping': False, }
-                return render(request, 'store/handlerequest.html', context)
-
-            except:
-                return HttpResponse("Siganatures did not genrated ")
+        return HttpResponse("404 Not Found")
 
 
 def updateItem(request):
@@ -256,6 +228,17 @@ def updateItem(request):
     if orderItem.quantity <= 0:
         # remove the orderItem from cart, when quantity reaches 0, or below it
         orderItem.delete()
+
+    # get data for purchased items
+    if PurchasedOrder.objects.exists():
+        purchased = PurchasedOrder.objects.filter(customer=customer).last()
+        purchased_Items, created = PurchasedItems.objects.get_or_create(
+            product=product, purchased_order=purchased)
+        purchased_Items.quantity = orderItem.quantity
+        purchased_Items.save()
+        if purchased_Items.quantity <= 0:
+            # remove the orderItem from cart, when quantity reaches 0, or below it
+            purchased_Items.delete()
 
     return JsonResponse('Item was added', safe=False)
 

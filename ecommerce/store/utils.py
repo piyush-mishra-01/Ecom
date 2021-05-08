@@ -54,6 +54,14 @@ def cartData(request):
         # the below line, is used to query from the OrderItem model
         items = order.orderitem_set.all()
         cartItems = order.get_cart_items
+        # below line will create conform order db
+        if PurchasedOrder.objects.exists():
+            if PurchasedOrder.objects.filter(razorpay_signature__isnull=True, customer=customer).last():
+                pass
+            else:
+                PurchasedOrder.objects.create(customer=customer)
+        else:
+            PurchasedOrder.objects.create(customer=customer)
     else:
         # cookieCart function is present in utils.py, and to use it, it's imported here
         # check utils.py for cookieCart function

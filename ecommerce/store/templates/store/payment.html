@@ -19,19 +19,8 @@
 							"description": "Test Transaction",
 							"image": "{% static 'images/watch.jpg' %} ",
 							"callback_url": "{{callback_url}} ",
-							// "handler": function (response) {
-							//   alert(response.razorpay_payment_id);
-							//   alert(response.razorpay_order_id);
-							//   alert(response.razorpay_signature)
-							// //   if (typeof response.razorpay_payment_id == 'undefined' || response.razorpay_payment_id < 1) {
-							// //     redirect_url = '/chechout';
-							// //   } else {
-							// //     redirect_url = callback_url='{{callback_url}}';
-							// //   }
-							// //   location.href = redirect_url;
-							// },
 							"prefill": {
-								"name": "{{request.user}}",
+								"name": "{{request.user.first_name}}",
 								"email": "{{request.user.email}}",
 								"contact": ""
 							},
@@ -41,19 +30,9 @@
 						};
 
 						var rzp1 = new Razorpay(options);
-						rzp1.on('payment.failed', function (response) {
-							alert(response.error.code);
-							alert(response.error.description);
-							alert(response.error.source);
-							alert(response.error.step);
-							alert(response.error.reason);
-							alert(response.error.metadata.order_id);
-							alert(response.error.metadata.payment_id);
-						});
 						document.getElementById('rzp-button1').onclick = function (e) {
 							rzp1.open();
 							e.preventDefault();
-							// submitFormData()
 						}
 
 					</script>

@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'store.apps.StoreConfig',
 ]
 
@@ -131,3 +130,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/images/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR,'static/images')
+
+# Razorpay keys
+RAZORPAY_API_KEY = 'rzp_test_lD1RsgbizQ5lpQ'
+RAZORPAY_API_SECRET_KEY = 'jDdLiF2QTGmI4A8asOAbDz2K'
