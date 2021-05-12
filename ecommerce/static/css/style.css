@@ -71,7 +71,7 @@ a:focus {
 
 .btn{
   border-radius: 0;
-},
+}
 .btn:focus {
   outline: none !important;
   -webkit-box-shadow: none;

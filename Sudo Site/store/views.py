@@ -1,3 +1,4 @@
+from ecommerce.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
 from django.shortcuts import render, HttpResponse, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -14,7 +15,7 @@ from .utils import *
 
 # RazorPay client
 client = razorpay.Client(
-    auth=('rzp_test_lD1RsgbizQ5lpQ', 'jDdLiF2QTGmI4A8asOAbDz2K'))
+    auth=(RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY))
 
 
 # remember to change the code here, to show total cart value at about page too
@@ -130,7 +131,7 @@ def payment(request):
             purchased.razorpay_order_id = payment['id']
             purchased.save()
 
-            context = {'items': items, 'order': order,
+            context = {'items': items, 'order': order, 'api_key':RAZORPAY_API_KEY,
                        'cartItems': cartItems, 'shipping': False,
                        'amount': amount, 'order_id': payment['id'],
                        'orderId': orderId, 'callback_url': callback_url}

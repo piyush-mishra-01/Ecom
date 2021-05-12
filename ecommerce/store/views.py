@@ -123,37 +123,33 @@ def payment(request):
     order = data['order']
     items = data['items']
 
-    # RazorPay integration
-    callback_url = 'http://' + \
-        str(get_current_site(request)) + '/handlerequest'
+    callback_url = 'http://' + str(get_current_site(request)) + '/handlerequest'
+
     if request.user.is_authenticated:
         customer = request.user.customer
         purchased = PurchasedOrder.objects.filter(customer=customer).last()
         orderId = purchased.order_id
         amount = float(order.get_cart_total)*100
-        order_currency = 'INR'
+        currency = 'INR'
         notes = {'Plateform': 'WatchShop',
                  'CallbackURL': callback_url, 'WatchSop Order Id': orderId}
-        if amount > 1:
-            payment = client.order.create(
-                {'amount': amount, 'currency': order_currency, 'receipt': orderId,
-                 'notes': notes, 'payment_capture': '1'})
 
+        if amount > 1:
+            payment = client.order.create(dict(
+                amount=amount, currency=currency, receipt=orderId, notes=notes, payment_capture='1'))
+            print(payment['id'])
             purchased.razorpay_order_id = payment['id']
             purchased.save()
-            print(payment['id'])
 
-            context = {'items': items, 'order': order,
-                       'cartItems': cartItems, 'shipping': False,
-                       'amount': amount, 'order_id': payment['id'],
-                       'orderId': orderId, 'callback_url': callback_url,
-                       'api_key': RAZORPAY_API_KEY}
+            context = {'items': items, 'order': order, 'cartItems': cartItems,
+                       'api_key': RAZORPAY_API_KEY, 'order_id': payment['id'], 'callback_url': callback_url}
             return render(request, 'store/payment.html', context)
+
         else:
             return HttpResponse("Minimum ammount must be INR 1 for checkout")
 
     else:
-        return redirect('/login')
+        return redirect("/login")
 
 
 # Getting paymentID and SignatureID
@@ -175,7 +171,7 @@ def handlerequest(request):
                     'razorpay_order_id': order_id,
                     'razorpay_signature': signature
                 }
-                print(params_dict)
+
                 try:
                     purchased = PurchasedOrder.objects.get(
                         razorpay_order_id=order_id)
@@ -187,6 +183,7 @@ def handlerequest(request):
                 purchased.save()
 
                 result = client.utility.verify_payment_signature(params_dict)
+                print(result)
                 if result == None:
                     purchased.payment_status = 1
                     purchased.save()
@@ -203,7 +200,7 @@ def handlerequest(request):
                                'cartItems': cartItems, 'shipping': False, }
                     return render(request, 'store/paymentfailed.html', context)
             except:
-                return HttpResponse("Nothing")
+                return HttpResponse("params_dict Not Captured")
 
         else:
             return HttpResponse("Its not a post request")
@@ -368,7 +365,6 @@ def handleLogin(request):
 
             if user is not None:
                 login(request, user)
-                messages.success(request, "successfully logged in")
                 return redirect("/")
             else:
                 messages.error(
@@ -385,7 +381,6 @@ def handleLogin(request):
 def handleLogout(request):
     if request.user.is_authenticated:
         logout(request)
-        messages.success(request, "successfully logged out")
         return redirect("/")
     else:
         return redirect("/")

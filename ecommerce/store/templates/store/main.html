@@ -7,6 +7,7 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<!-- Mobile Metas -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 	<!-- Site Metas -->
 	<link rel="icon" href="{% static 'images/fevicon/fevicon.png' %}" type="image/gif" />
@@ -139,7 +140,6 @@
 						<div class="user_optio_box">
 							<a href="{% url 'cart' %} ">
 								<i class="fa fa-shopping-cart" aria-hidden="true"></i> {{cartItems}}
-								<!-- <p id="cart-total">{{cartItems}}</p> -->
 							</a>
 						</div>
 					</div>
@@ -153,7 +153,7 @@
 		{% endblock content %}
 
 		<!-- info section -->
-		<section class="info_section  layout_padding2">
+		<section class="info_section layout_padding2">
 			<div class="container">
 				<div class="info_logo">
 					<h2>
