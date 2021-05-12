@@ -18,14 +18,14 @@ client = razorpay.Client(
     auth=(RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY))
 
 
-# remember to change the code here, to show total cart value at about page too
-def about(request):
+# This will show details of product
+def productDetail(request, slug):
     data = cartData(request)
     cartItems = data['cartItems']
 
-    products = Product.objects.all()
+    products = Product.objects.filter(slug=slug).first()
     context = {"products": products, 'cartItems': cartItems}
-    return render(request, 'store/about.html', context)
+    return render(request, 'store/productdetail.html', context)
 
 
 def store(request):
@@ -37,13 +37,25 @@ def store(request):
     return render(request, 'store/store.html', context)
 
 
-def search(request):
-    q = request.GET['q']
+def product(request):
     data = cartData(request)
     cartItems = data['cartItems']
-    products = Product.objects.all().filter(name__icontains=q)
+
+    products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
-    return render(request, 'store/search.html', context)
+    return render(request, 'store/product.html', context)
+
+
+def search(request):
+    try:
+        q = request.GET['q']
+        data = cartData(request)
+        cartItems = data['cartItems']
+        products = Product.objects.all().filter(name__icontains=q)
+        context = {"products": products, 'cartItems': cartItems}
+        return render(request, 'store/search.html', context)
+    except:
+        return HttpResponse("404 Page Not Found")
 
 
 def cart(request):
@@ -129,6 +141,7 @@ def payment(request):
 
             purchased.razorpay_order_id = payment['id']
             purchased.save()
+            print(payment['id'])
 
             context = {'items': items, 'order': order,
                        'cartItems': cartItems, 'shipping': False,
@@ -162,6 +175,7 @@ def handlerequest(request):
                     'razorpay_order_id': order_id,
                     'razorpay_signature': signature
                 }
+                print(params_dict)
                 try:
                     purchased = PurchasedOrder.objects.get(
                         razorpay_order_id=order_id)
@@ -173,12 +187,9 @@ def handlerequest(request):
                 purchased.save()
 
                 result = client.utility.verify_payment_signature(params_dict)
-                print(result)
                 if result == None:
                     purchased.payment_status = 1
                     purchased.save()
-
-                    """ Mail to customer and owner """
 
                     orderItem = OrderItem.objects.get(order=order)
                     orderItem.delete()
@@ -192,7 +203,8 @@ def handlerequest(request):
                                'cartItems': cartItems, 'shipping': False, }
                     return render(request, 'store/paymentfailed.html', context)
             except:
-                return HttpResponse("Signature did not genrated")
+                return HttpResponse("Nothing")
+
         else:
             return HttpResponse("Its not a post request")
     else:
@@ -377,3 +389,12 @@ def handleLogout(request):
         return redirect("/")
     else:
         return redirect("/")
+
+
+def contact(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+
+    products = Product.objects.all()
+    context = {"products": products, 'cartItems': cartItems}
+    return render(request, 'store/contact.html', context)

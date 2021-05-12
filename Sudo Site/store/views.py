@@ -124,7 +124,7 @@ def payment(request):
 
         if amount > 1:
             payment = client.order.create(
-                {'amount': amount, 'currency': order_currency, 'receipt':orderId, 'payment_capture': '0'})
+                {'amount': amount, 'currency': order_currency, 'receipt':orderId, 'payment_capture': '1'})
             order.razorpay_order_id = payment['id']
             order.save()
             purchased.razorpay_order_id = payment['id']

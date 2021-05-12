@@ -2,30 +2,21 @@
 {% load static %}
 {% block content %}
 
+	 <!-- product section -->
+
   <section class="product_section ">
     <div class="container">
 	<div class="product_heading">
-<h3 class="my-4 border-bottom pb-1"><span class="text-muted">Search results for </span>{{request.GET.q}}</h3>
-<div class="row justify-content-center align-items-center ">
-	<div class="col-lg-6 ">
-		<div class="box-element" id="form-wrapper">
-			{% if messages %}
-			<div class="alert alert-warning alert-dismissible fade show" role="alert">
-				{% for message in messages %}{{message}} {% endfor %}
-				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-				  <span aria-hidden="true">&times;</span>
-				</button>
-			  </div>
-			{% endif %}
-		</div>
-	</div>
-</div>
- </div>
-<div class="product_container">
+        <!-- <h2>
+          New Arrivals
+        </h2> -->
+      </div>
+      <div class="product_container">
+
 		{% for product in products %}
-		        <div class="box text-center">
+        <div class="box text-center">
           <div class="box-content">
-            <a href="{% url 'product_detail' product.slug %}">
+            <a href="{% url 'product_detail' product.slug %} ">
             <div class="img-box">
               <img src="{{product.imageURL}}" alt="">
             </div>
@@ -47,10 +38,11 @@
             </button>
           </div>
         </div>
-		{% endfor %}
 
-</div>
-	</div>
-</section>
+		{% endfor %}
+      </div>
+    </div>
+  </section>
+  <!-- end product section -->
 
 {% endblock content %}

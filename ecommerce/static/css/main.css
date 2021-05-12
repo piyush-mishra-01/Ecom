@@ -1,11 +1,3 @@
-body{
-	background-color: hsl(0, 0%, 98%);
-}
-
-h1,h2,h3,h4,h5,h6{
-	color:hsl(0, 0%, 30%);
-}
-
 .box-element{
 	box-shadow:hsl(0, 0%, 80%) 0 0 16px;
 	background-color: #fff;
@@ -48,10 +40,6 @@ h1,h2,h3,h4,h5,h6{
 
 .col-lg-4, .col-lg-6, .col-lg-8, .col-lg-12{
 	margin-top: 10px;
-}
-
-.btn{
-	border-radius: 0;
 }
 
 .row-image{

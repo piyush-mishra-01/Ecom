@@ -14,6 +14,7 @@ class Customer(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=200, null=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
+    slug = models.SlugField(max_length=200, unique=True, null=True) 
     available = models.BooleanField(default=True, null=True, blank=False)
     image = models.ImageField(null=True, blank=True)
 
