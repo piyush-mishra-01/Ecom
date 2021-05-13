@@ -12,7 +12,6 @@ import json
 from .models import *
 from .utils import *
 
-
 # RazorPay client
 client = razorpay.Client(
     auth=(RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY))
@@ -112,7 +111,6 @@ def checkout(request):
 
         context = {'items': items, 'order': order, 'cartItems': cartItems}
         return render(request, 'store/checkout.html', context)
-
     else:
         return redirect('/login')
 
