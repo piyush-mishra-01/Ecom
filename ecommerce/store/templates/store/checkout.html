@@ -6,70 +6,80 @@
 {% endblock %}
 
 <section class="contact_section layout_padding">
-<div class="container">
+  <div class="container">
 
-<div class="heading_container">
-        <h2>
-          Shipping Information
-        </h2>
-      </div>
-<div class="row">
-  <div class="col-lg-6">
-
-<div class="form_container">
-            <form id="form" action="{% url 'checkout' %}" method="post">
+    <div class="heading_container">
+      <h2>
+        Shipping Information
+      </h2>
+    </div>
+    <div class="row">
+      <div class="col-lg-6">
+      
+            {% if messages %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              {% for message in messages %}{{message}} {% endfor %}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              </div>
+            {% endif %}
+    
+        <div class="form_container">
+          <form id="form" action="{% url 'checkout' %}" method="post">
             {% csrf_token %}
-              <div>
-                <input type="text" name="address" id="address" placeholder="Address.." required />
-              </div>
-              <div>
-                <input type="text" name="mobile" id="mobile" placeholder="Mobile.." required />
-              </div>
-              <div>
-                <input type="text" name="city" id="city" placeholder="City.." required />
-              </div>
-              <div>
-                <input type="text" name="state" id="state" placeholder="State.." required />
-              </div>
-              <div>
-                <input type="text" name="zipcode" id="zipcode" placeholder="Zip code.." required />
-              </div>
-              <div>
-                <button type="submit" class="btn btn-outline-success btn-block" value="Continue">Continue</button>
-              </div>
-              
-            </form>
+            <div>
+              <input type="text" name="address" id="address" placeholder="Address.." required />
+            </div>
+            <div>
+              <input type="text" name="mobile" id="mobile" placeholder="Mobile.." required />
+              <p id="mobilenum"></p>
+            </div>
+            <div>
+              <input type="text" name="city" id="city" placeholder="City.." required />
+            </div>
+            <div>
+              <input type="text" name="state" id="state" placeholder="State.." required />
+            </div>
+            <div>
+              <input type="text" name="zipcode" id="zipcode" placeholder="Zip code.." required />
+            </div>
+            <div>
+              <button type="submit" class="btn btn-outline-success btn-block" value="Continue">Continue</button>
+            </div>
+
+          </form>
+        </div>
+
+        <br>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="box-element">
+          <a class="btn btn-outline-dark" href="{% url 'cart' %}">&#x2190; Back to Cart</a>
+          <hr>
+          <h3>Order Summary</h3>
+          <hr>
+          {% for item in items %}
+          <div class="cart-row">
+            <div style="flex:2"><img class="row-image" src="{{ item.product.imageURL }}"></div>
+            <div style="flex:2">
+              <p>{{ item.product.name }}</p>
+            </div>
+            <div style="flex:1">
+              <p>&#8377; {{ item.product.price|floatformat:2 }}</p>
+            </div>
+            <div style="flex:1">
+              <p>{{ item.quantity }}</p>
+            </div>
           </div>
-
-    <br>
-  </div>
-
-  <div class="col-lg-6">
-    <div class="box-element">
-      <a class="btn btn-outline-dark" href="{% url 'cart' %}">&#x2190; Back to Cart</a>
-      <hr>
-      <h3>Order Summary</h3>
-      <hr>
-      {% for item in items %}
-      <div class="cart-row">
-        <div style="flex:2"><img class="row-image" src="{{ item.product.imageURL }}"></div>
-        <div style="flex:2">
-          <p>{{ item.product.name }}</p>
-        </div>
-        <div style="flex:1">
-          <p>&#8377; {{ item.product.price|floatformat:2 }}</p>
-        </div>
-        <div style="flex:1">
-          <p>{{ item.quantity }}</p>
+          {% endfor %}
+          <h5>Items: {{ order.get_cart_items }}</h5>
+          <h5>Total: &#8377; {{ order.get_cart_total|floatformat:2 }}</h5>
         </div>
       </div>
-      {% endfor %}
-      <h5>Items: {{ order.get_cart_items }}</h5>
-      <h5>Total: &#8377; {{ order.get_cart_total|floatformat:2 }}</h5>
     </div>
   </div>
-</div>
-</div>
 </section>
 
 <script type="text/javascript">
@@ -83,8 +93,12 @@
   // }
 
 
-
   var form = document.getElementById('form')
+  var number = document.getElementById('mobile')
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.getElementById('mobilenum')
+  })
 
   // the below code takes the csrftoken generated by the form in incognito mode,
   // and passes it to the backend for processing of payment

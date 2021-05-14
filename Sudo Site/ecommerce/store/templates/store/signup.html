@@ -1,0 +1,87 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %}
+
+ <section class="contact_section layout_padding">
+    <div class="container">
+    <div class="row justify-content-center align-items-center ">
+      <div class="col-lg-6">
+        <div class="box-element" id="form-wrapper">
+          {% if messages %}
+          <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {% for message in messages %}{{message}} {% endfor %}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+      <div class="heading_container justify-content-center align-items-center">
+        <h2>
+          Sign Up
+        </h2>
+      </div>
+
+	<div class="row justify-content-center align-items-center">
+        <div class="col-md-6">
+          <div class="form_container">
+            <form action="{% url 'signup' %}" method="POST" >
+            {% csrf_token %}
+              <div>
+                <input type="text" id="username" name="username" placeholder="Username" required />
+              </div>
+              <div>
+                <input type="email" id="email" name="email" placeholder="Email" required />
+              </div>
+              <div>
+                <input type="text" id="fname" name="fname" placeholder="First name" required />
+              </div>
+              <div>
+                <input type="text" id="lname" name="lname" placeholder="Last name" required />
+              </div>
+              <div>
+                <input type="password" id="pass1" name="pass1" placeholder="Enter your password" required />
+              </div>
+              <div>
+                <input type="password" id="pass2" name="pass2" placeholder="Confirm your password" required />
+              </div>
+			  <div class="row mb-4">
+					<div class="col d-flex justify-content-center">
+						<!-- Simple link -->
+						<a href="{% url 'login' %} ">Log In</a>
+					</div>
+				</div>
+                <div>
+                <button type="submit" class="btn btn-outline-success btn-block">Sign Up</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+      </div>
+
+</div>
+</section>
+
+
+	{% endblock content %}
+
+						{% comment %} <div class="form-group">
+						<input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+					</div>
+					<div class="form-group">
+						<input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+					</div>
+					<div class="form-group">
+						<input type="text" class="form-control" id="fname" name="fname" placeholder="First name" required>
+					</div>
+					<div class="form-group">
+						<input type="text" class="form-control" id="lname" name="lname" placeholder="Last name" required>
+					</div>
+					<div class="form-group">
+						<input type="password" class="form-control" id="pass1" name="pass1" placeholder="Enter your password" required>
+					</div>
+					<div class="form-group">
+						<input type="password" class="form-control" id="pass2" name="pass2" placeholder="Confirm your password" required> {% endcomment %}

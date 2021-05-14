@@ -6,11 +6,13 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 import razorpay
 import datetime
 import json
 from .models import *
 from .utils import *
+
 
 # RazorPay client
 client = razorpay.Client(
@@ -66,55 +68,53 @@ def cart(request):
     context = {'items': items, 'order': order, 'cartItems': cartItems}
     return render(request, 'store/cart.html', context)
 
-
+@login_required
 def checkout(request):
     data = cartData(request)
     cartItems = data['cartItems']
     order = data['order']
     items = data['items']
 
-    if request.user.is_authenticated:
-        if request.method == 'POST':
-            customer = request.user.customer
-            purchased = PurchasedOrder.objects.filter(customer=customer).last()
-            shippingAddress = ShippingAddress.objects.filter(
-                customer=customer, purchased_order=purchased).last()
-            address = request.POST['address']
-            mobile = request.POST['mobile']
-            city = request.POST['city']
-            state = request.POST['state']
-            zipcode = request.POST['zipcode']
+    if request.method == 'POST':
+        customer = request.user.customer
+        purchased = PurchasedOrder.objects.filter(customer=customer).last()
+        shippingAddress = ShippingAddress.objects.filter(
+            customer=customer, purchased_order=purchased).last()
+        address = request.POST['address']
+        mobile = request.POST['mobile']
+        city = request.POST['city']
+        state = request.POST['state']
+        zipcode = request.POST['zipcode']
 
-            if shippingAddress:
-                shippingAddress.address = address
-                shippingAddress.mobile = mobile
-                shippingAddress.city = city
-                shippingAddress.state = state
-                shippingAddress.zipcode = zipcode
-                shippingAddress.save()
-            else:
-                ShippingAddress.objects.create(
-                    customer=customer,
-                    purchased_order=purchased,
-                    address=address,
-                    mobile=mobile,
-                    city=city,
-                    state=state,
-                    zipcode=zipcode
-                )
+        if shippingAddress:
+            shippingAddress.address = address
+            shippingAddress.mobile = mobile
+            shippingAddress.city = city
+            shippingAddress.state = state
+            shippingAddress.zipcode = zipcode
+            shippingAddress.save()
+        else:
+            ShippingAddress.objects.create(
+                customer=customer,
+                purchased_order=purchased,
+                address=address,
+                mobile=mobile,
+                city=city,
+                state=state,
+                zipcode=zipcode
+            )
 
-            purchased.cart_quantity = order.get_cart_items
-            purchased.price = order.get_cart_total
-            purchased.save()
+        purchased.cart_quantity = order.get_cart_items
+        purchased.price = order.get_cart_total
+        purchased.save()
 
-            return redirect('/payment')
+        return redirect('/payment')
 
-        context = {'items': items, 'order': order, 'cartItems': cartItems}
-        return render(request, 'store/checkout.html', context)
-    else:
-        return redirect('/login')
+    context = {'items': items, 'order': order, 'cartItems': cartItems}
+    return render(request, 'store/checkout.html', context)
 
 
+@login_required
 def payment(request):
     data = cartData(request)
     cartItems = data['cartItems']
@@ -123,31 +123,28 @@ def payment(request):
 
     callback_url = 'http://' + str(get_current_site(request)) + '/handlerequest'
 
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        purchased = PurchasedOrder.objects.filter(customer=customer).last()
-        orderId = purchased.order_id
-        amount = float(order.get_cart_total)*100
-        currency = 'INR'
-        notes = {'Plateform': 'WatchShop',
-                 'CallbackURL': callback_url, 'WatchSop Order Id': orderId}
+    customer = request.user.customer
+    purchased = PurchasedOrder.objects.filter(customer=customer).last()
+    orderId = purchased.order_id
+    amount = float(order.get_cart_total)*100
+    currency = 'INR'
+    notes = {'Plateform': 'WatchShop',
+                'CallbackURL': callback_url, 'WatchSop Order Id': orderId}
 
-        if amount > 1:
-            payment = client.order.create(dict(
-                amount=amount, currency=currency, receipt=orderId, notes=notes, payment_capture='1'))
-            print(payment['id'])
-            purchased.razorpay_order_id = payment['id']
-            purchased.save()
+    if amount > 1:
+        payment = client.order.create(dict(
+            amount=amount, currency=currency, receipt=orderId, notes=notes, payment_capture='1'))
+        print(payment['id'])
+        purchased.razorpay_order_id = payment['id']
+        purchased.save()
 
-            context = {'items': items, 'order': order, 'cartItems': cartItems,
-                       'api_key': RAZORPAY_API_KEY, 'order_id': payment['id'], 'callback_url': callback_url}
-            return render(request, 'store/payment.html', context)
-
-        else:
-            return HttpResponse("Minimum ammount must be INR 1 for checkout")
+        context = {'items': items, 'order': order, 'cartItems': cartItems,
+                    'api_key': RAZORPAY_API_KEY, 'order_id': payment['id'], 'callback_url': callback_url}
+        return render(request, 'store/payment.html', context)
 
     else:
-        return redirect("/login")
+        return HttpResponse("Minimum ammount must be INR 1 for checkout")
+
 
 
 # Getting paymentID and SignatureID
@@ -325,6 +322,7 @@ def handleSignup(request):
                 messages.error(request, "Passwords do not match")
                 return redirect("/signup")
 
+
             # Create User
             myuser = User.objects.create_user(username, email, pass1)
             myuser.first_name = fname
@@ -339,8 +337,8 @@ def handleSignup(request):
             )
 
             messages.success(request, username +
-                             " Your account has been succesfully created")
-            return redirect("/login")
+                             " Your accounts has been succesfully created")
+            return redirect("/accounts/login")
     else:
         return redirect("/")
 
@@ -367,7 +365,7 @@ def handleLogin(request):
             else:
                 messages.error(
                     request, "Invalid Credentials, Please try again")
-                return redirect("/login")
+                return redirect("/accounts/login")
     else:
         return redirect("/")
 

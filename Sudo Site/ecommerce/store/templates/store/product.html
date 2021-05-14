@@ -1,0 +1,48 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %}
+
+	 <!-- product section -->
+
+  <section class="product_section ">
+    <div class="container">
+	<div class="product_heading">
+        <!-- <h2>
+          New Arrivals
+        </h2> -->
+      </div>
+      <div class="product_container">
+
+		{% for product in products %}
+        <div class="box text-center">
+          <div class="box-content">
+            <a href="{% url 'product_detail' product.slug %} ">
+            <div class="img-box">
+              <img src="{{product.imageURL}}" alt="">
+            </div>
+            </a>
+            <div class="detail-box">
+              <div class="text ">
+                <h6>
+                  {{product.name}}
+                </h6>
+                <h5>
+                  <span>&#8377;</span> {{product.price}}
+                </h5>
+              </div>
+            </div>
+          </div>
+          <div class="btn-box">
+            <button data-product="{{product.id}}" data-action="add" class="btn btn-outline-success add-btn update-cart ">
+              Add To Cart
+            </button>
+          </div>
+        </div>
+
+		{% endfor %}
+      </div>
+    </div>
+  </section>
+  <!-- end product section -->
+
+{% endblock content %}

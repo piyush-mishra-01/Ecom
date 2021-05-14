@@ -1,0 +1,40 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %} 
+ 
+ <!-- contact section -->
+  <section class="contact_section layout_padding">
+    <div class="container">
+      <div class="heading_container justify-content-center align-items-center">
+        <h2>
+          Contact Us
+        </h2>
+      </div>
+      <div class="row justify-content-center align-items-center">
+        <div class="col-md-6">
+          <div class="form_container">
+            <form action="">
+            {% csrf_token %}
+              <div>
+                <input type="text" placeholder="Your Name" required/>
+              </div>
+              <div>
+                <input type="text" placeholder="Phone Number" required/>
+              </div>
+              <div>
+                <input type="email" placeholder="Email" required/>
+              </div>
+              <div>
+                <input type="text" class="message-box" placeholder="Message" required/>
+              </div>
+                <div>
+                <button type="submit" class="btn btn-outline-success btn-block" value="Continue">Continue</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- end contact section -->
+  {% endblock content %}
