@@ -138,6 +138,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'static/images')
 RAZORPAY_API_KEY = 'rzp_test_lD1RsgbizQ5lpQ'
 RAZORPAY_API_SECRET_KEY = 'jDdLiF2QTGmI4A8asOAbDz2K'
 
+LOGIN_URL = '/user/login'
+
 # mail config
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST='smtp.gmail.com'
