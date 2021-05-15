@@ -21,6 +21,9 @@ class Product(models.Model):
     slug = models.SlugField(max_length=200, unique=True, null=True)
     SKUID = models.CharField(max_length=200, null=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
+    brand = models.CharField(max_length=20, null=True)
+    specs = models.TextField(null=True)
+    detail = models.TextField(null=True)
     image = models.ImageField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
 

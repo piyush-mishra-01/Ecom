@@ -22,9 +22,6 @@
             <div class="img-box b1">
               <img src="{{products.imageURL}}" alt="">
             </div>
-            <div class="img-box b2">
-              <img src="{{products.imageURL}}" alt="">
-            </div>
           </div>
         </div>
         <div class="col-md-6">
@@ -33,10 +30,19 @@
               {{products.name}}
             </h2>
             <p>
-              There are many variations of passages of Lorem Ipsum
-              There are many variations of
-              passages of Lorem Ipsum
+              {{products.detail}}
             </p>
+<table class="table table-bordered">
+				<tr>
+					<th>Brand</th>
+					<td>{{products.brand}}</td>
+				</tr>
+				<tr>
+					<th>Specification</th>
+					<td><pre>{{products.specs}}</pre></td>
+				</tr>
+			</table>
+		</div>
             <div class="detail-box">
               <div class="text ">
                 <h5>
