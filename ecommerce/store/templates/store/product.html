@@ -2,6 +2,11 @@
 {% load static %}
 {% block content %}
 
+ 
+<style type="text/css">
+  
+</style>
+
 	 <!-- product section -->
 
   <section class="product_section ">
@@ -41,6 +46,17 @@
 
 		{% endfor %}
       </div>
+      {% if prev %}
+      <a class="btn btn-outline-dark float-left mb-3" href="{{prev}}">&#x2190; Back</a>
+      {% else %}
+      <a class="btn btn-outline-dark float-left mb-3" href="#">&#x2190; Back</a>
+      {% endif %}
+      
+      {% if nxt %}
+      <a class="btn btn-outline-dark float-right mb-3" href="{{nxt}}">Next &#x2192;</a>
+      {% else %}
+      <a class="btn btn-outline-dark float-right mb-3" href="#">Next &#x2192;</a>
+      {% endif %}
     </div>
   </section>
   <!-- end product section -->

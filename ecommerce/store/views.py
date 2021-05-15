@@ -7,16 +7,29 @@ from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 import razorpay
 import datetime
 import json
 from .models import *
 from .utils import *
-
+import math
 
 # RazorPay client
 client = razorpay.Client(
     auth=(RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY))
+
+
+def store(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+
+    products = Product.objects.all().order_by('-date_added')
+    # paginator = Paginator(products, 9)
+    # page = request.GET.get('page')
+    # products = paginator.get_page(page)
+    context = {"products": products, 'cartItems': cartItems}
+    return render(request, 'store/store.html', context)
 
 
 # This will show details of product
@@ -29,21 +42,29 @@ def productDetail(request, slug):
     return render(request, 'store/productdetail.html', context)
 
 
-def store(request):
-    data = cartData(request)
-    cartItems = data['cartItems']
-
-    products = Product.objects.all()
-    context = {"products": products, 'cartItems': cartItems}
-    return render(request, 'store/store.html', context)
-
-
 def product(request):
     data = cartData(request)
     cartItems = data['cartItems']
 
-    products = Product.objects.all()
-    context = {"products": products, 'cartItems': cartItems}
+    no_of_product = 3
+    page = request.GET.get('page')
+    if page is None:
+        page = 1
+    else:
+        page = int(page)
+
+    products = Product.objects.all().order_by('-date_added')
+    length = len(products)
+    products = products[(page-1)*no_of_product : page*no_of_product]
+    if page > 1:
+        prev = "?page=" + str(page - 1)
+    else:
+        prev = None
+    if page < math.ceil(length/no_of_product):
+        nxt = "?page=" + str(page + 1)
+    else:
+        nxt = None
+    context = {"products": products, 'cartItems': cartItems, 'prev':prev, 'nxt':nxt }
     return render(request, 'store/product.html', context)
 
 
@@ -85,6 +106,7 @@ def checkout(request):
         city = request.POST['city']
         state = request.POST['state']
         zipcode = request.POST['zipcode']
+        gstin = request.POST['gstin']
 
         if shippingAddress:
             shippingAddress.address = address
@@ -104,8 +126,9 @@ def checkout(request):
                 zipcode=zipcode
             )
 
+        purchased.GSTIN = gstin
         purchased.cart_quantity = order.get_cart_items
-        purchased.price = order.get_cart_total
+        purchased.total_price = order.get_cart_total
         purchased.save()
 
         return redirect('/payment')
@@ -178,7 +201,6 @@ def handlerequest(request):
                 purchased.save()
 
                 result = client.utility.verify_payment_signature(params_dict)
-                print(result)
                 if result == None:
                     purchased.payment_status = 1
                     purchased.save()
@@ -247,39 +269,6 @@ def updateItem(request):
     return JsonResponse('Item was added', safe=False)
 
 
-def processOrder(request):
-    transaction_id = datetime.datetime.now().timestamp()
-    data = json.loads(request.body)
-
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        order, created = Order.objects.get_or_create(
-            customer=customer, complete=False)
-
-    else:
-        # guestOrder function is present in utils.py
-        customer, order = guestOrder(request, data)
-
-    total = float(data['form']['total'])
-    order.transaction_id = transaction_id
-
-    if total == order.get_cart_total:
-        order.complete = True
-    order.save()
-
-    if order.shipping == True:
-        ShippingAddress.objects.create(
-            customer=customer,
-            order=order,
-            address=data['shipping']['address'],
-            mobile=data['shipping']['mobile'],
-            city=data['shipping']['city'],
-            state=data['shipping']['state'],
-            zipcode=data['shipping']['zipcode'],
-        )
-
-    return JsonResponse("Payment submitted...", safe=False)
-
 
 def handleSignup(request):
     data = cartData(request)
@@ -319,7 +308,7 @@ def handleSignup(request):
 
             # Passwords should match
             if pass1 != pass2:
-                messages.error(request, "Passwords do not match")
+                messages.error(request, "Passwords did not match")
                 return redirect("/signup")
 
 
