@@ -1,5 +1,5 @@
 from ecommerce.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.decorators.csrf import csrf_exempt
@@ -21,9 +21,9 @@ def store(request):
     cartItems = data['cartItems']
 
     products = Product.objects.all().order_by('-date_added')
-    # paginator = Paginator(products, 9)
-    # page = request.GET.get('page')
-    # products = paginator.get_page(page)
+    paginator = Paginator(products, 6)
+    page = request.GET.get('page')
+    products = paginator.get_page(page)
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/store.html', context)
 
@@ -42,7 +42,7 @@ def product(request):
     data = cartData(request)
     cartItems = data['cartItems']
 
-    no_of_product = 3
+    no_of_product = 6
     page = request.GET.get('page')
     if page is None:
         page = 1
@@ -153,7 +153,6 @@ def payment(request):
     if amount > 1:
         payment = client.order.create(dict(
             amount=amount, currency=currency, receipt=orderId, notes=notes, payment_capture='1'))
-        print(payment['id'])
         purchased.razorpay_order_id = payment['id']
         purchased.save()
 

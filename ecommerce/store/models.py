@@ -21,9 +21,9 @@ class Product(models.Model):
     slug = models.SlugField(max_length=200, unique=True, null=True)
     SKUID = models.CharField(max_length=200, null=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
-    brand = models.CharField(max_length=20, null=True)
-    specs = models.TextField(null=True)
-    detail = models.TextField(null=True)
+    brand = models.CharField(max_length=20, null=True, blank=True)
+    specs = models.TextField(null=True, blank=True)
+    detail = models.TextField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
 
@@ -45,7 +45,7 @@ class Product(models.Model):
         except:
             url = ''
         return url
-
+    
 
 class Order(models.Model):
     customer = models.ForeignKey(
@@ -128,7 +128,7 @@ class PurchasedItems(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.SET_NULL, blank=True, null=True)
     purchased_order = models.ForeignKey(
-        PurchasedOrder, on_delete=models.SET_NULL, blank=True, null=True)
+        PurchasedOrder, on_delete=models.CASCADE, blank=True, null=True)
     quantity = models.IntegerField(default=0, null=True, blank=True)
 
     @property
@@ -144,7 +144,7 @@ class ShippingAddress(models.Model):
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, blank=True, null=True)
     purchased_order = models.ForeignKey(
-        PurchasedOrder, on_delete=models.SET_NULL, blank=True, null=True)
+        PurchasedOrder, on_delete=models.CASCADE, blank=True, null=True)
     address = models.TextField(null=True)
     mobile = models.CharField(max_length=200, null=True)
     city = models.CharField(max_length=200, null=True)
@@ -152,4 +152,4 @@ class ShippingAddress(models.Model):
     zipcode = models.CharField(max_length=200, null=True)
 
     def __str__(self):
-        return self.address
+        return f"{str(self.purchased_order.id)} {self.address}"

@@ -9,6 +9,7 @@
 
  </div>
 <div class="product_container">
+{% if products %}
 		{% for product in products %}
 		        <div class="box text-center">
           <div class="box-content">
@@ -35,6 +36,11 @@
           </div>
         </div>
 		{% endfor %}
+    {% else %}
+    <div class="product_heading">
+    <h3 class="my-4 border-bottom pb-1">Item Not Found</h3>
+    </div>
+    {% endif %}
 
 </div>
 	</div>
