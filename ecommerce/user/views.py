@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from store.utils import *
+from store.models import *
 
 # Create your views here.
 def handleSignup(request):

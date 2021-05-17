@@ -1,5 +1,5 @@
 from ecommerce.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
-from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
+from django.shortcuts import render, HttpResponse, redirect
 from django.http import JsonResponse
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.decorators.csrf import csrf_exempt
@@ -127,7 +127,19 @@ def checkout(request):
         purchased.total_price = order.get_cart_total
         purchased.save()
 
-        return redirect('/payment')
+        if request.POST.get('click', False):
+            purchased.COD = 1
+            purchased.save()
+
+            orderItem = OrderItem.objects.get(order=order)
+            orderItem.delete()
+
+            context = {'items': items, 'order': order,
+                        'cartItems': cartItems, 'shipping': False, }
+            return render(request, 'store/paymentsuccess.html', context)    
+        
+        else:
+            return redirect('/payment')
 
     context = {'items': items, 'order': order, 'cartItems': cartItems}
     return render(request, 'store/checkout.html', context)
@@ -215,7 +227,10 @@ def handlerequest(request):
                 return HttpResponse("params_dict Not Captured")
 
         else:
-            return HttpResponse("Its not a post request")
+            context = {'items': items, 'order': order,
+                               'cartItems': cartItems, 'shipping': False, }
+            return render(request, 'store/paymentsuccess.html', context)
+            # return HttpResponse("Its not a post request")
     else:
         return HttpResponse("404 Not Found")
 

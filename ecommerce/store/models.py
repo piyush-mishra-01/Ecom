@@ -93,6 +93,10 @@ class PurchasedOrder(models.Model):
         (1, 'SUCCESS'),
         (2, 'PENDING/FAILURE')
     )
+    cod_choices = (
+        (1, 'YES'),
+        (2, 'NO')
+    )
     # customer
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, blank=True, null=True)
@@ -101,6 +105,8 @@ class PurchasedOrder(models.Model):
         unique=True, max_length=500, null=True, blank=True, default=None)
     cart_quantity = models.IntegerField(default=0, null=True, blank=True)
     total_price = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    COD = models.IntegerField(
+        choices=cod_choices, default=2)
     payment_status = models.IntegerField(
         choices=payment_status_choices, default=2)
     # RazorPay Models

@@ -56,7 +56,7 @@ def cartData(request):
         cartItems = order.get_cart_items
         # below line will create conform order db
         if PurchasedOrder.objects.exists():
-            if PurchasedOrder.objects.filter(razorpay_signature__isnull=True, customer=customer).last():
+            if PurchasedOrder.objects.filter(razorpay_signature__isnull=True, COD=2, customer=customer).last():
                 pass
             else:
                 PurchasedOrder.objects.create(customer=customer)
