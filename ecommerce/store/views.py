@@ -134,6 +134,8 @@ def checkout(request):
             orderItem = OrderItem.objects.get(order=order)
             orderItem.delete()
 
+            # Emai conformation for COD to client + owner 
+
             context = {'items': items, 'order': order,
                         'cartItems': cartItems, 'shipping': False, }
             return render(request, 'store/paymentsuccess.html', context)    
@@ -214,6 +216,9 @@ def handlerequest(request):
 
                     orderItem = OrderItem.objects.get(order=order)
                     orderItem.delete()
+
+                    # Emai conformation for payment to client + owner
+
                     context = {'items': items, 'order': order,
                                'cartItems': cartItems, 'shipping': False, }
                     return render(request, 'store/paymentsuccess.html', context)
@@ -282,6 +287,8 @@ def updateItem(request):
 def contact(request):
     data = cartData(request)
     cartItems = data['cartItems']
+
+    # contact email
 
     products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
