@@ -1,0 +1,19 @@
+Hey {{name}}
+Order ID: {{orderID}}
+
+Thanks for purchasing this product
+
+Your COD order is confirmed.
+
+{% for item in items %}
+{{ item.product.imageURL }}
+Product: {{ item.product.name }}
+Price Rs: {{ item.product.price|floatformat:2 }}
+Quantity: {{ item.quantity }}
+Total Price Rs: {{ item.get_total|floatformat:2 }}
+{% endfor %}
+
+Total Items: {{ order.get_cart_items }}
+Total Amount Rs: {{ order.get_cart_total|floatformat:2 }}
+
+MASTRENA

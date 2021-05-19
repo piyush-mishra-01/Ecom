@@ -1,4 +1,4 @@
-from ecommerce.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
+from ecommerce.settings import DEFAULT_FROM_EMAIL, EMAIL_HOST_USER, RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
 from django.shortcuts import render, HttpResponse, redirect
 from django.http import JsonResponse
 from django.contrib.sites.shortcuts import get_current_site
@@ -10,11 +10,8 @@ import json
 from .models import *
 from .utils import *
 import math
-from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-import user
-
 
 # RazorPay client
 client = razorpay.Client(
@@ -136,33 +133,33 @@ def checkout(request):
             purchased.COD = 1
             purchased.save()
 
-            orderItem = OrderItem.objects.get(order=order)
-            orderItem.delete()
-
             # Emai conformation for COD to client + owner 
-            template = render_to_string('store/email.html')
+            template = render_to_string('emails/cod_mail.html', {'name': request.user.customer.name, 
+                                        'items': items, 'order': order, 'cartItems': cartItems, 'orderID': purchased.order_id})
             email = EmailMessage(
                 'Thanks for purchasing this product',
                 template,
-                settings.EMAIL_HOST_USER,
+                DEFAULT_FROM_EMAIL,
                 [request.user.email],
             )
             email.fail_silently=False
             email.send()
             
             email = EmailMessage(
-                'You have got a new sale',
+                'You have got a new COD sale',
                 'body',
-                settings.EMAIL_HOST_USER,
-                ['mpiyushonline@gmail.com'],
+                DEFAULT_FROM_EMAIL,
+                [EMAIL_HOST_USER],
             )
             email.fail_silently=False
             email.send()
 
+            orderItem = OrderItem.objects.all()
+            orderItem.delete()
 
             context = {'items': items, 'order': order,
                         'cartItems': cartItems, 'shipping': False, }
-            return render(request, 'store/paymentsuccess.html', context)   
+            return render(request, 'store/codsuccess.html', context)   
         else:
             return redirect('/payment')
 
@@ -184,8 +181,8 @@ def payment(request):
     orderId = purchased.order_id
     amount = float(order.get_cart_total)*100
     currency = 'INR'
-    notes = {'Plateform': 'WatchShop',
-                'CallbackURL': callback_url, 'WatchSop Order Id': orderId}
+    notes = {'Plateform': 'Mastrena',
+                'CallbackURL': callback_url, 'Mastrena Order Id': orderId}
 
     if amount > 1:
         payment = client.order.create(dict(
@@ -237,15 +234,13 @@ def handlerequest(request):
                     purchased.payment_status = 1
                     purchased.save()
 
-                    orderItem = OrderItem.objects.get(order=order)
-                    orderItem.delete()
 
                     # Emai conformation for payment to client + owner
                     template = render_to_string('store/email.html')
                     email = EmailMessage(
                         'Thanks for purchasing this product',
                         template,
-                        settings.EMAIL_HOST_USER,
+                        EMAIL_HOST_USER,
                         [request.user.email],
                         )
                     email.fail_silently=False
@@ -254,18 +249,14 @@ def handlerequest(request):
                     email = EmailMessage(
                         'You have got a new sale',
                         'body',
-                        settings.EMAIL_HOST_USER,
+                        EMAIL_HOST_USER,
                         ['mpiyushonline01@gmail.com'],
                         )
                     email.fail_silently=False
                     email.send()
 
-                    
-
-
-
-
-
+                    orderItem = OrderItem.objects.all()
+                    orderItem.delete()
 
                     context = {'items': items, 'order': order,
                                'cartItems': cartItems, 'shipping': False, }
@@ -336,15 +327,15 @@ def contact(request):
     data = cartData(request)
     cartItems = data['cartItems']
 
+    if request.method == 'POST':
+        name = request.POST['name']
+        mobile = request.POST['mobile']
+        email = request.POST['email']
+        message = request.POST['message']
+
     # contact email
-    email = EmailMessage(
-                'Thanks for purchasing this product',
-                'product.name at price product.price',
-                settings.EMAIL_HOST_USER,
-                ['mishrapiyush2001@gmail.com'],
-            )
-    email.fail_silently=False
-    email.send()
+
+
     products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/contact.html', context)
