@@ -135,8 +135,8 @@ MEDIA_URL = '/images/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'static/images')
 
 # Razorpay keys
-RAZORPAY_API_KEY = 'rzp_test_lD1RsgbizQ5lpQ'
-RAZORPAY_API_SECRET_KEY = 'jDdLiF2QTGmI4A8asOAbDz2K'
+RAZORPAY_API_KEY = 'rzp_test_k7gELRwdamfCQB'
+RAZORPAY_API_SECRET_KEY = 'uIR1rCZ7SvI2FQ86DhuGJavJ'
 
 LOGIN_URL = '/user/login'
 
@@ -147,4 +147,4 @@ EMAIL_HOST_USER='pank4139@gmail.com'
 EMAIL_HOST_PASSWORD='TemporaryEmail14@#'
 EMAIL_PORT=587
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'noreply<no_reply@mastrena.in>'
+DEFAULT_FROM_EMAIL = 'MASTRENA<no_reply@mastrena.in>'

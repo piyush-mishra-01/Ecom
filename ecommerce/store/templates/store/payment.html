@@ -158,20 +158,20 @@
 					<!-- Razorpay integration -->
 					<p>Do Not Refresh This Page</p>
 					<button id="rzp-button1" class="btn btn-outline-success btn-block">Pay &#8377; {{order.get_cart_total}} with Razorpay</button>
-					<a href="/" class="btn btn-outline-danger btn-block">Return Back to Home</a>
+					<a href="/" class="btn btn-outline-danger btn-block">Return to Home</a>
 					<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 					<script>
 					var options = {
 						"key": "{{api_key}}",
-						"name": "WatchShop",
+						"name": "Mastrena",
 						"description": "Test Transaction",
 						"image": "https://example.com/your_logo",
 						"order_id": "{{order_id}}",
 						"callback_url":"{{callback_url}}",
 						"prefill": {
-							"name": "Gaurav Kumar",
-							"email": "gaurav.kumar@example.com",
-							"contact": "9999999999"
+							"name": "{{name}}",
+							"email": "{{email}}",
+							"contact": "{{mobile}}"
 						},
 						"theme": {
 							"color": "#3399cc"

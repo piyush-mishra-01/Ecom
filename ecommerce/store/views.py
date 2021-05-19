@@ -10,8 +10,9 @@ import json
 from .models import *
 from .utils import *
 import math
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 # RazorPay client
 client = razorpay.Client(
@@ -53,7 +54,7 @@ def product(request):
 
     products = Product.objects.all().order_by('-date_added')
     length = len(products)
-    products = products[(page-1)*no_of_product : page*no_of_product]
+    products = products[(page-1)*no_of_product: page*no_of_product]
     if page > 1:
         prev = "?page=" + str(page - 1)
     else:
@@ -62,7 +63,8 @@ def product(request):
         nxt = "?page=" + str(page + 1)
     else:
         nxt = None
-    context = {"products": products, 'cartItems': cartItems, 'prev':prev, 'nxt':nxt }
+    context = {"products": products,
+        'cartItems': cartItems, 'prev': prev, 'nxt': nxt}
     return render(request, 'store/product.html', context)
 
 
@@ -86,6 +88,7 @@ def cart(request):
 
     context = {'items': items, 'order': order, 'cartItems': cartItems}
     return render(request, 'store/cart.html', context)
+
 
 @login_required
 def checkout(request):
@@ -133,25 +136,32 @@ def checkout(request):
             purchased.COD = 1
             purchased.save()
 
-            # Emai conformation for COD to client + owner 
-            template = render_to_string('emails/cod_mail.html', {'name': request.user.customer.name, 
+            # Emai conformation for COD to client + owner
+            order_client_template = render_to_string('emails/order_client_template.html', {'name': request.user.customer.name,
                                         'items': items, 'order': order, 'cartItems': cartItems, 'orderID': purchased.order_id})
-            email = EmailMessage(
-                'Thanks for purchasing this product',
-                template,
+            text_content = strip_tags(order_client_template)
+            email = EmailMultiAlternatives(
+                'Thanks for purchasing from MASTRENA',
+                text_content,
                 DEFAULT_FROM_EMAIL,
                 [request.user.email],
             )
-            email.fail_silently=False
+            email.attach_alternative(order_client_template, "text/html")
+            email.fail_silently = False
             email.send()
-            
-            email = EmailMessage(
-                'You have got a new COD sale',
-                'body',
+
+            order_template = render_to_string('emails/order_template.html', {'name': request.user.customer.name,
+                                        'items': items, 'order': order, 'cartItems': cartItems, 'orderID': purchased.order_id,
+                                        'email': request.user.customer.email})
+            order_content = strip_tags(order_template)
+            email = EmailMultiAlternatives(
+                f"You have got a COD order for Order- ID {purchased.order_id}",
+                order_content,
                 DEFAULT_FROM_EMAIL,
                 [EMAIL_HOST_USER],
             )
-            email.fail_silently=False
+            email.attach_alternative(order_template, "text/html")
+            email.fail_silently = False
             email.send()
 
             orderItem = OrderItem.objects.all()
@@ -159,7 +169,7 @@ def checkout(request):
 
             context = {'items': items, 'order': order,
                         'cartItems': cartItems, 'shipping': False, }
-            return render(request, 'store/codsuccess.html', context)   
+            return render(request, 'store/codsuccess.html', context)
         else:
             return redirect('/payment')
 
@@ -174,10 +184,13 @@ def payment(request):
     order = data['order']
     items = data['items']
 
-    callback_url = 'http://' + str(get_current_site(request)) + '/handlerequest'
+    callback_url = 'http://' + \
+        str(get_current_site(request)) + '/handlerequest'
 
     customer = request.user.customer
     purchased = PurchasedOrder.objects.filter(customer=customer).last()
+    shippingAddress = ShippingAddress.objects.filter(
+            customer=customer, purchased_order=purchased).last()
     orderId = purchased.order_id
     amount = float(order.get_cart_total)*100
     currency = 'INR'
@@ -191,12 +204,12 @@ def payment(request):
         purchased.save()
 
         context = {'items': items, 'order': order, 'cartItems': cartItems,
-                    'api_key': RAZORPAY_API_KEY, 'order_id': payment['id'], 'callback_url': callback_url}
+                    'api_key': RAZORPAY_API_KEY, 'order_id': payment['id'], 'callback_url': callback_url,
+                    'name': request.user.customer.name, 'email': request.user.customer.email, 'mobile': shippingAddress.mobile}
         return render(request, 'store/payment.html', context)
 
     else:
         return HttpResponse("Minimum ammount must be INR 1 for checkout")
-
 
 
 # Getting paymentID and SignatureID
@@ -234,25 +247,32 @@ def handlerequest(request):
                     purchased.payment_status = 1
                     purchased.save()
 
-
                     # Emai conformation for payment to client + owner
-                    template = render_to_string('store/email.html')
-                    email = EmailMessage(
-                        'Thanks for purchasing this product',
-                        template,
-                        EMAIL_HOST_USER,
+                    order_client_template = render_to_string('emails/order_client_template.html', {'name': request.user.customer.name,
+                                        'items': items, 'order': order, 'cartItems': cartItems, 'orderID': purchased.order_id})
+                    text_content = strip_tags(order_client_template)
+                    email = EmailMultiAlternatives(
+                        'Thanks for purchasing from MASTRENA',
+                        text_content,
+                        DEFAULT_FROM_EMAIL,
                         [request.user.email],
-                        )
-                    email.fail_silently=False
+                    )
+                    email.attach_alternative(order_client_template, "text/html")
+                    email.fail_silently = False
                     email.send()
 
-                    email = EmailMessage(
-                        'You have got a new sale',
-                        'body',
-                        EMAIL_HOST_USER,
-                        ['mpiyushonline01@gmail.com'],
-                        )
-                    email.fail_silently=False
+                    order_template = render_to_string('emails/order_template.html', {'name': request.user.customer.name,
+                                                'items': items, 'order': order, 'cartItems': cartItems, 'orderID': purchased.order_id,
+                                                'email': request.user.customer.email})
+                    order_content = strip_tags(order_template)
+                    email = EmailMultiAlternatives(
+                        f"You have got a Prepaid order for Order- ID {purchased.order_id}",
+                        order_content,
+                        DEFAULT_FROM_EMAIL,
+                        [EMAIL_HOST_USER],
+                    )
+                    email.attach_alternative(order_template, "text/html")
+                    email.fail_silently = False
                     email.send()
 
                     orderItem = OrderItem.objects.all()

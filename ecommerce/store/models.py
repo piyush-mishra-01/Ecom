@@ -123,7 +123,7 @@ class PurchasedOrder(models.Model):
     def save(self, *args, **kwargs):
         if self.order_id is None and self.date_ordered and self.id:
             self.order_id = self.date_ordered.strftime(
-                'PAY%y%m%d') + str(self.id)
+                'PAY%y%m%d-') + str(self.id)
         return super().save(*args, **kwargs)
 
     def __str__(self):
