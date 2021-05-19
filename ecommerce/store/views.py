@@ -10,6 +10,11 @@ import json
 from .models import *
 from .utils import *
 import math
+from django.conf import settings
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+import user
+
 
 # RazorPay client
 client = razorpay.Client(
@@ -135,11 +140,29 @@ def checkout(request):
             orderItem.delete()
 
             # Emai conformation for COD to client + owner 
+            template = render_to_string('store/email.html')
+            email = EmailMessage(
+                'Thanks for purchasing this product',
+                template,
+                settings.EMAIL_HOST_USER,
+                [request.user.email],
+            )
+            email.fail_silently=False
+            email.send()
+            
+            email = EmailMessage(
+                'You have got a new sale',
+                'body',
+                settings.EMAIL_HOST_USER,
+                ['mpiyushonline@gmail.com'],
+            )
+            email.fail_silently=False
+            email.send()
+
 
             context = {'items': items, 'order': order,
                         'cartItems': cartItems, 'shipping': False, }
-            return render(request, 'store/paymentsuccess.html', context)    
-        
+            return render(request, 'store/paymentsuccess.html', context)   
         else:
             return redirect('/payment')
 
@@ -218,6 +241,31 @@ def handlerequest(request):
                     orderItem.delete()
 
                     # Emai conformation for payment to client + owner
+                    template = render_to_string('store/email.html')
+                    email = EmailMessage(
+                        'Thanks for purchasing this product',
+                        template,
+                        settings.EMAIL_HOST_USER,
+                        [request.user.email],
+                        )
+                    email.fail_silently=False
+                    email.send()
+
+                    email = EmailMessage(
+                        'You have got a new sale',
+                        'body',
+                        settings.EMAIL_HOST_USER,
+                        ['mpiyushonline01@gmail.com'],
+                        )
+                    email.fail_silently=False
+                    email.send()
+
+                    
+
+
+
+
+
 
                     context = {'items': items, 'order': order,
                                'cartItems': cartItems, 'shipping': False, }
@@ -289,7 +337,14 @@ def contact(request):
     cartItems = data['cartItems']
 
     # contact email
-
+    email = EmailMessage(
+                'Thanks for purchasing this product',
+                'product.name at price product.price',
+                settings.EMAIL_HOST_USER,
+                ['mishrapiyush2001@gmail.com'],
+            )
+    email.fail_silently=False
+    email.send()
     products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/contact.html', context)
