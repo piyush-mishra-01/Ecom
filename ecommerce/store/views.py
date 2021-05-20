@@ -10,9 +10,10 @@ import json
 from .models import *
 from .utils import *
 import math
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from ecommerce import settings
 
 # RazorPay client
 client = razorpay.Client(
@@ -353,8 +354,22 @@ def contact(request):
         email = request.POST['email']
         message = request.POST['message']
 
-    # contact email
 
+    # contact email
+        email = EmailMultiAlternatives(
+                        f"Thanks for Contacting us ",
+                        message,
+                        DEFAULT_FROM_EMAIL,
+                        [EMAIL_HOST_USER],
+                    )
+        email.fail_silently = False
+        email.send()
+
+
+
+
+    
+    
 
     products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
