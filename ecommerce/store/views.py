@@ -357,8 +357,8 @@ def contact(request):
 
     # contact email
         email = EmailMultiAlternatives(
-                        f"Thanks for Contacting us ",
-                        message,
+                        f"{name},one of your user has contacted you",
+                        f"Name:-{name} \n Phone No:-{mobile} \n Email:-\n {email} \n\n\n\n\n Message:- \n {message}",
                         DEFAULT_FROM_EMAIL,
                         [EMAIL_HOST_USER],
                     )
@@ -374,3 +374,4 @@ def contact(request):
     products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/contact.html', context)
+    contact.save
