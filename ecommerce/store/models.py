@@ -160,12 +160,3 @@ class ShippingAddress(models.Model):
     def __str__(self):
         return f"{str(self.purchased_order.id)} {self.address}"
 
-class Contact(models.Model):
-    name = models.CharField(max_length=200, null=True)
-    mobile = models.CharField(max_length=200, null=True)
-    email = models.CharField(max_length=200, null=True)
-    message = models.TextField(null=True)
-    
-    def __str__(self):
-        return self.name
-    

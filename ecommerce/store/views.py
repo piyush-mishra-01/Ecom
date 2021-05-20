@@ -10,10 +10,10 @@ import json
 from .models import *
 from .utils import *
 import math
-from django.core.mail import EmailMultiAlternatives, send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from ecommerce import settings
+from django.contrib import messages
 
 # RazorPay client
 client = razorpay.Client(
@@ -25,7 +25,7 @@ def store(request):
     cartItems = data['cartItems']
 
     products = Product.objects.all().order_by('-date_added')
-    paginator = Paginator(products, 6)
+    paginator = Paginator(products, 30)
     page = request.GET.get('page')
     products = paginator.get_page(page)
     context = {"products": products, 'cartItems': cartItems}
@@ -46,7 +46,7 @@ def product(request):
     data = cartData(request)
     cartItems = data['cartItems']
 
-    no_of_product = 6
+    no_of_product = 30
     page = request.GET.get('page')
     if page is None:
         page = 1
@@ -292,10 +292,7 @@ def handlerequest(request):
                 return HttpResponse("params_dict Not Captured")
 
         else:
-            context = {'items': items, 'order': order,
-                               'cartItems': cartItems, 'shipping': False, }
-            return render(request, 'store/paymentsuccess.html', context)
-            # return HttpResponse("Its not a post request")
+            return HttpResponse("Its not a post request")
     else:
         return HttpResponse("404 Not Found")
 
@@ -357,21 +354,15 @@ def contact(request):
 
     # contact email
         email = EmailMultiAlternatives(
-                        f"{name},one of your user has contacted you",
-                        f"Name:-{name} \n Phone No:-{mobile} \n Email:-\n {email} \n\n\n\n\n Message:- \n {message}",
+                        f"A new message from {name}",
+                        f"Name: {name} \nPhone No: {mobile} \nEmail: {email} \n\n\nMessage: \n {message}",
                         DEFAULT_FROM_EMAIL,
                         [EMAIL_HOST_USER],
                     )
         email.fail_silently = False
         email.send()
-
-
-
-
-    
-    
+        messages.success(request, "Your message have been sent succesfully")
 
     products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/contact.html', context)
-    contact.save

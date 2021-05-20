@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'l5_akklae$adgl!)%7p1=nn#^4m7)f#p#kd*76&!kde7xiw#h8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1','eccommercce.herokuapp.com']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -48,7 +48,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -144,8 +143,8 @@ LOGIN_URL = '/user/login'
 # mail config
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST='smtp.gmail.com'
-EMAIL_HOST_USER='41218002718@delhitechnicalcampus.ac.in'
-EMAIL_HOST_PASSWORD='ucmishra164'
+EMAIL_HOST_USER='pank4139@gmail.com'
+EMAIL_HOST_PASSWORD='TemporaryEmail14@#'
 EMAIL_PORT=587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'MASTRENA<no_reply@mastrena.in>'
