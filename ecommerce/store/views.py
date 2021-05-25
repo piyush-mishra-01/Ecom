@@ -195,7 +195,7 @@ def payment(request):
     orderId = purchased.order_id
     amount = float(order.get_cart_total)*100
     currency = 'INR'
-    notes = {'Plateform': 'Mastrena',
+    notes = {'Plateform': 'Mastrena.in',
                 'CallbackURL': callback_url, 'Mastrena Order Id': orderId}
 
     if amount > 1:
