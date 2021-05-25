@@ -58,6 +58,10 @@ body {
   text-align: center;
 }
 
+.atag{
+  text-decoration: none;
+  border-radius: 0;
+}
 a,
 a:hover,
 a:focus {
@@ -627,18 +631,8 @@ a:focus {
 }
 
 .product_section .product_container .box .btn-box a {
-  display: inline-block;
   padding: 10px 30px;
-  background-color: #8019c8;
-  color: #ffffff;
-  border-radius: 5px;
-  -webkit-transition: all 0.3s;
-  transition: all 0.3s;
-  border: none;
-}
-
-.product_section .product_container .box .btn-box a:hover {
-  background-color: #541184;
+  border-radius: 0;
 }
 
 .client_section .box {
