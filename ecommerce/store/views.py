@@ -185,7 +185,7 @@ def payment(request):
     order = data['order']
     items = data['items']
 
-    callback_url = 'http://' + \
+    callback_url = 'https://' + \
         str(get_current_site(request)) + '/handlerequest'
 
     customer = request.user.customer
