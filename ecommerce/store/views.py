@@ -366,3 +366,12 @@ def contact(request):
     products = Product.objects.all()
     context = {"products": products, 'cartItems': cartItems}
     return render(request, 'store/contact.html', context)
+
+def privacypolicy(request):
+    return render(request, 'store/privacypolicy.html')
+
+def conditions(request):
+    return render(request, 'store/conditions.html')
+
+def refund(request):
+    return render(request, 'store/refund.html')

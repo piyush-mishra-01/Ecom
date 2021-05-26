@@ -124,16 +124,18 @@
 							</li>
 							<li class="nav-item">
 								<a class="nav-link" href="{% url 'contact' %} ">Contact Us</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{% url 'privacypolicy' %} ">Privacy Policy</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{% url 'refund' %} ">Refund/Cancelation</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{% url 'conditions' %} ">Terms of Service</a>
-							</li>
+							<li class="nav-item dropdown">
+        					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          					Company Policies
+        					</a>
+        					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          					<a class="dropdown-item" href="{% url 'privacypolicy' %} ">Privacy Policy</a>
+          					<a class="dropdown-item" href="{% url 'conditions' %} ">Terms of Service</a>
+          					<div class="dropdown-divider"></div>
+          					<a class="dropdown-item" href="{% url 'refund' %} ">Refund/Cancelation Policy</a>
+        					</div>
+      						</li>
+							
 							{% if request.user.is_authenticated %}
 							<li class="nav-item">
 								<a class="nav-link" href="{% url 'profile' %} ">{{request.user}} </a>
