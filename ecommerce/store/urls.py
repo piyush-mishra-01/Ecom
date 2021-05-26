@@ -10,6 +10,9 @@ urlpatterns = [
     path('handlerequest',views.handlerequest, name="handlerequest"),
     path('payment/',views.payment, name="payment"),
     path('contact/',views.contact, name="contact"),
+    path('privacypolicy/',views.privacypolicy, name="privacypolicy"),
+    path('conditions/',views.conditions, name="conditions"),
+    path('refund/',views.refund, name="refund"),
     path('product_detail/<slug:slug>/',views.productDetail, name="product_detail")
 ]
 

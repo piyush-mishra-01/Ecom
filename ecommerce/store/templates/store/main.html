@@ -125,6 +125,15 @@
 							<li class="nav-item">
 								<a class="nav-link" href="{% url 'contact' %} ">Contact Us</a>
 							</li>
+							<li class="nav-item">
+								<a class="nav-link" href="{% url 'privacypolicy' %} ">Privacy Policy</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" href="{% url 'refund' %} ">Refund/Cancelation</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" href="{% url 'conditions' %} ">Terms of Service</a>
+							</li>
 							{% if request.user.is_authenticated %}
 							<li class="nav-item">
 								<a class="nav-link" href="{% url 'profile' %} ">{{request.user}} </a>
